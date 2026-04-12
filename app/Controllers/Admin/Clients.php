@@ -15,14 +15,14 @@ class Clients extends BaseController
         $data['clientes'] = $model->findAll();
         $data['titulo']   = "Meus Clientes";
 
-        return view('admin/clients_list', $data);
+        return view('admin/clients_list_view', $data);
     }
     
     
     
     public function create()
     {
-        return view('admin/clients_form'); // Vamos criar essa view agora
+        return view('admin/clients_form_view'); // Vamos criar essa view agora
     }
 
     
@@ -53,7 +53,7 @@ class Clients extends BaseController
             return redirect()->to('/admin/clientes')->with('msg', 'Cliente não encontrado!');
         }
 
-        return view('admin/clients_edit', $data);
+        return view('admin/clients_edit_view', $data);
     }
 
     

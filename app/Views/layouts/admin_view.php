@@ -34,7 +34,7 @@
         <span class="navbar-text me-3">
           Olá, <strong><?= session()->get('nome') ?? 'Usuário' ?></strong>
         </span>
-        <a href="/login/logout" class="btn btn-outline-light btn-sm">Sair</a>
+            <a href="<?= url_to('logout') ?>" class="btn btn-outline-danger">Sair</a>
       </div>
     </div>
   </div>

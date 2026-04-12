@@ -18,6 +18,6 @@ class Dashboard extends BaseController // O nome da classe deve ser igual ao arq
             'ultimosClientes' => $model->orderBy('id', 'DESC')->findAll(5),
         ];
 
-        return view('admin/dashboard', $data);
+        return view('admin/dashboard_view', $data);
     }
 }

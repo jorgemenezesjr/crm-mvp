@@ -1,4 +1,4 @@
-<?= $this->extend('layouts/admin') ?>
+<?= $this->extend('layouts/admin_view') ?>
 
 <?= $this->section('title') ?> Novo Cliente <?= $this->endSection() ?>
 
@@ -15,7 +15,7 @@
 
                     <div class="mb-3">
                         <label for="nome" class="form-label">Nome Completo</label>
-                        <input type="text" name="nome" id="nome" class="form-control" placeholder="Ex: João Silva" required>
+                        <input type="text" name="nome" id="nome" class="form-control" placeholder="Ex: Joï¿½o Silva" required>
                     </div>
 
                     <div class="mb-3">
