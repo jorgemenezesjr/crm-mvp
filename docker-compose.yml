@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # PHP com CodeIgniter
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: crm-app
+    container_name: crm-php
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    volumes:
+      - ./:/var/www
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - crm-network
+
+  # Servidor Web Nginx
+  nginx:
+    image: nginx:alpine
+    container_name: crm-nginx
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8081:80"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - crm-network
+
+  # Banco de Dados MySQL
+  db:
+    image: mysql:8.0
+    container_name: crm-db
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: crm_db
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_PASSWORD: root
+    volumes:
+      - ./docker/mysql:/var/lib/mysql
+    networks:
+      - crm-network
+
+networks:
+  crm-network:
+    driver: bridge
