@@ -21,6 +21,7 @@ $routes->group('admin', ['filter' => 'session'], function ($routes) {
     $routes->get('clientes/editar/(:num)', '\App\Controllers\Admin\Clients::edit/$1');
     $routes->post('clientes/atualizar/(:num)', '\App\Controllers\Admin\Clients::update/$1');
     $routes->get('clientes/excluir/(:num)', '\App\Controllers\Admin\Clients::delete/$1');
+    $routes->get('admin/dashboard', '\App\Controllers\Admin\Dashboard::index');
 });
 
 service('auth')->routes($routes);
