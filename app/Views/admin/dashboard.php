@@ -46,10 +46,10 @@
                         <?php foreach($ultimosClientes as $cliente): ?>
                         <tr>
                             <td>
-                                <a href="/admin/clientes/editar/<?= $cliente['id'] ?>" class="text-decoration-none fw-bold">
+                                <a href="<?= site_url('admin/clientes/editar/' . $cliente['id']) ?>" class="text-decoration-none fw-bold">
                                     <?= $cliente['nome'] ?>
-                            </a>
-</td>
+                                </a>
+                            </td>
                             <td><?= $cliente['email'] ?></td>
                             <td><?= date('d/m/Y', strtotime($cliente['created_at'])) ?></td>
                         </tr>

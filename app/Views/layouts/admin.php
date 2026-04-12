@@ -26,7 +26,7 @@
           <a class="nav-link" href="/admin/dashboard">Dashboard</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/admin/clientes">Clientes</a>
+          <a class="nav-link" href="<?= site_url('admin/clientes') ?>">Clientes</a>
         </li>
       </ul>
       

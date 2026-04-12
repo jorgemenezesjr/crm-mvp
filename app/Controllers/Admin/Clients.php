@@ -57,19 +57,13 @@ class Clients extends BaseController
     }
 
     
-    public function update($id)
+   public function update($id = null)
     {
-        $model = new ClientModel();
+        $model = new \App\Models\ClientModel();
+        $data = $this->request->getPost();
 
-        $dados = [
-            'nome'     => $this->request->getPost('nome'),
-            'email'    => $this->request->getPost('email'),
-            'telefone' => $this->request->getPost('telefone'),
-            'status'   => $this->request->getPost('status'),
-        ];
-
-        if ($model->update($id, $dados)) {
-            return redirect()->to('/admin/clientes')->with('msg', 'Cliente atualizado com sucesso!');
+        if ($model->update($id, $data)) {
+            return redirect()->to('/admin/clientes')->with('success', 'Cliente atualizado com sucesso!');
         }
     }
     
