@@ -13,10 +13,15 @@ class Dashboard extends BaseController // O nome da classe deve ser igual ao arq
 
         $data = [
             'titulo'          => 'Dashboard',
-            'totalClientes'   => $model->countAllResults(),
-            'clientesAtivos'  => $model->where('status', 'ativo')->countAllResults(),
-            'ultimosClientes' => $model->orderBy('id', 'DESC')->findAll(5),
-        ];
+            'totalClientes'   => $model->where('empresa_id', $this->empresa_id)
+                                       ->countAllResults(),
+            'clientesAtivos'  => $model->where('empresa_id', $this->empresa_id)
+                                       ->where('status', 'ativo')
+                                       ->countAllResults(),
+            'ultimosClientes' => $model->where('empresa_id', $this->empresa_id)
+                                       ->orderBy('id', 'DESC')
+                                       ->findAll(5),
+            ];
 
         return view('admin/dashboard_view', $data);
     }
