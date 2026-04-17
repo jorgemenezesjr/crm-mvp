@@ -2,7 +2,7 @@
 
 <?= $this->section('title') ?> Novo Cliente <?= $this->endSection() ?>
 
-<?= $this->section('content') ?>
+<?= $this->section('conteudo') ?>
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card shadow-sm">
@@ -15,7 +15,7 @@
 
                     <div class="mb-3">
                         <label for="nome" class="form-label">Nome Completo</label>
-                        <input type="text" name="nome" id="nome" class="form-control" placeholder="Ex: Jo�o Silva" required>
+                        <input type="text" name="nome" id="nome" class="form-control" placeholder="Ex: João Silva" required>
                     </div>
 
                     <div class="mb-3">

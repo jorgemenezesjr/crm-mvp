@@ -43,7 +43,8 @@
                                        class="btn btn-sm btn-danger" 
                                        onclick="return confirm('Tem certeza que deseja excluir este cliente?')">
                                         <i class="fas fa-trash"></i> Excluir
-                                    </a>
+                                    </a>         
+                                    
                                 </td>
                             </tr>
                         <?php endforeach; ?>

@@ -38,7 +38,17 @@ abstract class BaseController extends Controller
 
         // Caution: Do not edit this line.
         parent::initController($request, $response, $logger);
+        
+        // Se o usuário estiver logado pelo Shield
+        if (auth()->loggedIn()) {
+            $this->empresa_id = auth()->user()->empresa_id;
 
+            // Compartilha a variável com todas as VIEWS automaticamente
+            $this->viewData['current_empresa_id'] = $this->empresa_id;
+            
+            
+        }
+        
         // Preload any models, libraries, etc, here.
         // $this->session = service('session');
     }
