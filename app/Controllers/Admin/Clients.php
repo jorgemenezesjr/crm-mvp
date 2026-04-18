@@ -23,6 +23,19 @@ class Clients extends BaseController
     
     
     
+    public function kanban()
+    {
+        $model = new \App\Models\ClientModel();
+
+        // Lembra da nossa segurança de ontem? 
+        // Filtramos pela empresa para ninguém ver o card do outro!
+        $data['clientes'] = $model->where('empresa_id', $this->empresa_id)->findAll();
+        $data['titulo'] = "Fluxo de Vendas";
+
+        return view('admin/kanban_view', $data);
+    }
+    
+    
     public function create()
     {
         return view('admin/clients_form_view'); // Vamos criar essa view agora
@@ -86,6 +99,27 @@ class Clients extends BaseController
         return redirect()->to('/admin/clientes')->with('message', 'Atualizado com sucesso!');
     }
     
+    
+    public function updateStatus()
+    {
+        $json = $this->request->getJSON(); // Captura o que o JS enviou
+
+        if ($json) {
+            $model = new \App\Models\ClientModel();
+
+            // Aqui está o segredo: os nomes devem ser iguais aos do banco
+            $data = [
+                'status' => $json->status 
+            ];
+
+            // O id vem como $json->id
+            if ($model->update($json->id, ['status' => $json->status])) {
+                return $this->response->setJSON(['status' => 'success']);
+            }
+        }
+
+        return $this->response->setJSON(['status' => 'error', 'message' => 'Falha ao atualizar'], 400);
+    }
     
     public function delete($id)
     {

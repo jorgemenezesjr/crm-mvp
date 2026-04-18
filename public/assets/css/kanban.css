@@ -1,0 +1,44 @@
+/* Estilização para o Kanban */
+    .kanban-container {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        min-height: 80vh;
+    }
+
+    .kanban-column {
+        background-color: #f4f5f7;
+        border-radius: 8px;
+        min-height: 500px; /* Garante que a coluna aceite drops mesmo vazia */
+        padding: 10px;
+        transition: background-color 0.2s ease;
+    }
+
+    /* Efeito quando o card está sobre a coluna */
+    .sortable-ghost {
+        opacity: 0.4;
+        background-color: #e2eafc !important;
+        border: 2px dashed #007bff;
+    }
+
+    .draggable {
+        cursor: grab;
+        border-left: 5px solid #ccc;
+    }
+
+    .draggable:active {
+        cursor: grabbing;
+    }
+    
+    .sortable-chosen {
+    background-color: #e2eafc !important;
+    border: 2px solid #0d6efd !important;
+    }
+
+    /* Cores das bordas dos cards por status */
+    #lead .draggable { border-left-color: #0d6efd; }
+    #proposta .draggable { border-left-color: #ffc107; }
+    #negociacao .draggable { border-left-color: #17a2b8; }
+    #fechado .draggable { border-left-color: #198754; }
+    
+   
