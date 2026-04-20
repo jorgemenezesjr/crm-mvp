@@ -1,80 +1,52 @@
-/**
- * Lógica do Kanban - CRM
- */
-document.addEventListener('DOMContentLoaded', function () {
-    const container = document.getElementById('kanban-container');
-    const endpoint  = container.getAttribute('data-url'); // Pega a URL da View
-    const colunas   = document.querySelectorAll('.kanban-column');
+document.addEventListener('click', function (e) {
+    // Verifica se clicou no nome do cliente (classe btn-historico)
+    if (e.target.classList.contains('btn-historico')) {
+        const clientId = e.target.getAttribute('data-id');
+        const clientNome = e.target.getAttribute('data-nome');
+        const timeline = document.getElementById('timeline-historico');
+        const loader = document.getElementById('historico-carregando');
 
-    colunas.forEach(coluna => {
-        new Sortable(coluna, {
-            group: 'kanban',
-            animation: 150,
-            ghostClass: 'bg-light-blue',
-            onEnd: function (evt) {
-                // 1. Pega o ID do elemento HTML que foi movido (ex: "client-5")
-                const itemId = evt.item.id; 
+        // Configura o Modal
+        document.getElementById('modalHistoricoLabel').innerText = `Histórico: ${clientNome}`;
+        timeline.innerHTML = '';
+        loader.classList.remove('d-none');
+        
+        // Abre o modal (usando o objeto global do Bootstrap)
+        const myModal = new bootstrap.Modal(document.getElementById('modalHistorico'));
+        myModal.show();
 
-                // 2. Remove o prefixo para pegar só o número (o ID do banco)
-                const clientId = itemId.replace('client-', ''); 
+        // Busca os logs via Fetch
+        fetch(`${window.location.origin}/admin/clientes/historico/${clientId}`)
+            .then(response => response.json())
+            .then(data => {
+                loader.classList.add('d-none');
+                if (data.length === 0) {
+                    timeline.innerHTML = '<div class="alert alert-info">Nenhum registro encontrado para este cliente.</div>';
+                    return;
+                }
 
-                // 3. Pega o ID da coluna onde o card caiu (o novo status)
-                const newStatus = evt.to.id; 
+                // Monta a lista de logs
+                let html = '<ul class="list-group list-group-flush">';
+                data.forEach(log => {
+                    // Formata a data para o padrão brasileiro
+                    const dataFormatada = new Date(log.created_at).toLocaleString('pt-BR');
 
-                const url = document.getElementById('kanban-container').getAttribute('data-url');
-
-                // Agora o fetch vai funcionar porque 'clientId' existe!
-                fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="X-CSRF-TOKEN"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({
-                        id: clientId, // <--- Aqui o JS não vai mais reclamar
-                        status: newStatus
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status !== 'success') {
-                        alert('Erro ao salvar no banco!');
-                        location.reload(); // Recarrega para voltar o card pro lugar original
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro:', error);
-                    alert('Erro de conexão!');
+                    html += `
+                        <li class="list-group-item px-0">
+                            <div class="d-flex justify-content-between">
+                                <strong class="small text-primary">${log.usuario_nome ?? 'Sistema'}</strong>
+                                <small class="text-muted">${dataFormatada}</small>
+                            </div>
+                            <div class="mt-1">${log.acao}</div>
+                        </li>`;
                 });
-            },
-        });
-    });
+                html += '</ul>';
+                timeline.innerHTML = html;
+            })
+            .catch(error => {
+                loader.classList.add('d-none');
+                timeline.innerHTML = '<div class="alert alert-danger">Erro ao carregar histórico.</div>';
+                console.error('Erro:', error);
+            });
+    }
 });
-
-function saveStatus(id, status, url) {
-    const params = new URLSearchParams();
-    params.append('id', id);
-    params.append('status', status);
-
-    fetch(url, {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="X-CSRF-TOKEN"]').getAttribute('content')
-    },
-        body: JSON.stringify({
-        id: clientId,
-        status: newStatus
-    })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (!data.success) {
-            alert('Erro ao mover cliente.');
-            location.reload(); // Recarrega para voltar o card se deu erro
-        }
-    })
-    .catch(error => console.error('Erro:', error));
-}

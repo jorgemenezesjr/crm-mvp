@@ -63,12 +63,19 @@ class Clients extends BaseController
     {
         $model = new ClientModel();
 
+        // Pega o valor que veio do formulário com máscara
+        $valorRaw = $this->request->getPost('valor'); 
+
+        // Limpeza: Remove o ponto de milhar e troca a vírgula por ponto decimal
+        $valorLimpo = $this->formatValue($valorRaw);
+        
         // Pegamos os dados do formulário
         $dados = [
             'nome'     => $this->request->getPost('nome'),
             'email'    => $this->request->getPost('email'),
             'telefone' => $this->request->getPost('telefone'),
             'status'   => $this->request->getPost('status'),
+            'valor'    => $valorLimpo
         ];
 
         // O Model salva automaticamente no banco
@@ -110,6 +117,7 @@ class Clients extends BaseController
 
         // FORÇA o empresa_id da sessão, ignorando qualquer coisa que venha do form
         $dadosParaAtualizar['empresa_id'] = $this->empresa_id;
+        $dadosParaAtualizar['valor'] = $this->formatValue($this->empresa_id);
 
         $model->update($id, $dadosParaAtualizar);
 
@@ -169,6 +177,31 @@ class Clients extends BaseController
 
         return redirect()->to('/admin/clientes')
                          ->with('message', 'Cliente removido com sucesso!');
+    }
+    
+    
+    public function historico($id)
+    {
+        // 1. Conecta ao banco
+        $db = \Config\Database::connect();
+
+        // 2. Monta a consulta com Join para pegar o nome do usuário
+        // Ajuste 'username' para 'name' caso sua tabela de usuários use outro nome
+        $builder = $db->table('client_logs');
+        $builder->select('client_logs.acao, client_logs.created_at, users.username as usuario_nome');
+        $builder->join('users', 'users.id = client_logs.usuario_id', 'left');
+        $builder->where('client_id', $id);
+        $builder->orderBy('client_logs.created_at', 'DESC');
+
+        $logs = $builder->get()->getResultArray();
+
+        // 3. Retorna como JSON para o JavaScript
+        return $this->response->setJSON($logs);
+    }   
+    
+    private function formatValue($value) {
+        // Remove o ponto de milhar e troca a vírgula decimal por ponto
+        return str_replace(',', '.', str_replace('.', '', $value));
     }
     
 }

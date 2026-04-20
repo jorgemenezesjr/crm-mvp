@@ -30,11 +30,24 @@
                             <input type="email" name="email" class="form-control" value="<?= esc($cliente['email']) ?>" required>
                         </div>
 
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Status da Conta</label>
-                            <select name="status" class="form-select">
-                                <option value="ativo" <?= $cliente['status'] == 'ativo' ? 'selected' : '' ?>>Ativo</option>
-                                <option value="inativo" <?= $cliente['status'] == 'inativo' ? 'selected' : '' ?>>Inativo</option>
+                        <div class="mb-3">
+                            <label for="valor" class="form-label">Valor Estimado (R$)</label>
+                            <input type="text" 
+                                   name="valor" 
+                                   id="valor" 
+                                   class="form-control money" 
+                                   value="<?= isset($cliente) ? number_format($cliente['valor'], 2, ',', '.') : '0,00' ?>" 
+                                   placeholder="0,00">
+                            <small class="text-muted">Valor da proposta ou potencial de venda.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Etapa do Funil (Status)</label>
+                            <select name="status" id="status" class="form-select" required>
+                                <option value="lead"       <?= (isset($cliente) && $cliente['status'] == 'lead') ? 'selected' : '' ?>>Lead (Novo)</option>
+                                <option value="proposta"   <?= (isset($cliente) && $cliente['status'] == 'proposta') ? 'selected' : '' ?>>Proposta Enviada</option>
+                                <option value="negociacao" <?= (isset($cliente) && $cliente['status'] == 'negociacao') ? 'selected' : '' ?>>Em Negociação</option>
+                                <option value="fechado"    <?= (isset($cliente) && $cliente['status'] == 'fechado') ? 'selected' : '' ?>>Contrato Fechado (Ganhamos!)</option>
                             </select>
                         </div>
 
@@ -50,4 +63,7 @@
     </div>
 </div>
 
+<?= $this->endSection() ?>
+<?= $this->section('scripts') ?>
+    <script src="<?= base_url('assets/js/clients.js') ?>"></script>
 <?= $this->endSection() ?>
