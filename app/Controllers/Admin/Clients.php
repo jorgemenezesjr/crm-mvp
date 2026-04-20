@@ -3,7 +3,8 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
-use App\Models\ClientModel; // Importamos o modelo que você criou
+use App\Models\ClientModel; 
+use App\Models\ClientLogModel;
 
 class Clients extends BaseController
 {
@@ -29,9 +30,25 @@ class Clients extends BaseController
 
         // Lembra da nossa segurança de ontem? 
         // Filtramos pela empresa para ninguém ver o card do outro!
-        $data['clientes'] = $model->where('empresa_id', $this->empresa_id)->findAll();
+        $clientes = $data['clientes'] = $model->where('empresa_id', $this->empresa_id)->findAll();
         $data['titulo'] = "Fluxo de Vendas";
+        
+        
+        $totais = [
+            'lead'       => 0,
+            'proposta'   => 0,
+            'negociacao' => 0,
+            'fechado'    => 0
+        ];
 
+        foreach ($clientes as $c) {
+            $totais[$c['status']] += $c['valor'];
+        }
+        
+        $data['clientes'] = $clientes;
+        $data['totais'] = $totais;
+
+        
         return view('admin/kanban_view', $data);
     }
     
@@ -73,7 +90,7 @@ class Clients extends BaseController
         }
 
         $data['cliente'] = $cliente;
-        return view('admin/clientes/clients_form_view', $data);
+        return view('admin/clients_form_view', $data);
     }
 
     
@@ -102,20 +119,30 @@ class Clients extends BaseController
     
     public function updateStatus()
     {
-        $json = $this->request->getJSON(); // Captura o que o JS enviou
+        $json = $this->request->getJSON();
 
         if ($json) {
             $model = new \App\Models\ClientModel();
 
-            // Aqui está o segredo: os nomes devem ser iguais aos do banco
-            $data = [
-                'status' => $json->status 
-            ];
+            // 1. Buscar o registro ATUAL antes de mudar
+            $clienteAntigo = $model->find($json->id);
+            $statusAntigo = $clienteAntigo['status'] ?? 'desconhecido';
 
-            // O id vem como $json->id
+            // 2. Tentar atualizar para o novo status
             if ($model->update($json->id, ['status' => $json->status])) {
+
+                $logModel = new \App\Models\ClientLogModel();
+
+                // 3. Gravar o log com o histórico completo
+                $logModel->save([
+                    'client_id'  => $json->id,
+                    'usuario_id' => auth()->id(), 
+                    'empresa_id' => auth()->user()->empresa_id,
+                    'acao'       => "Alterou status de [{$statusAntigo}] para [{$json->status}]",
+                ]);
+
                 return $this->response->setJSON(['status' => 'success']);
-            }
+            }           
         }
 
         return $this->response->setJSON(['status' => 'error', 'message' => 'Falha ao atualizar'], 400);
