@@ -1,0 +1,106 @@
+/* kanban-modal.css */
+:root {
+    --primary-color: #4f46e5;
+    --whatsapp-color: #25d366;
+    --call-color: #3b82f6;
+    --email-color: #64748b;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+}
+
+.modal-content.crm-custom {
+    border-radius: 16px;
+    border: none;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.crm-header {
+    padding: 24px;
+    background: #fff;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.crm-proposal-badge {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 12px;
+    background: #f0fdf4;
+    color: #16a34a;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+/* Grid de Ações: agora com 3 colunas para incluir E-mail */
+.crm-action-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    padding: 20px 24px;
+    background: #fff;
+}
+
+.crm-btn-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 10px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    color: white;
+    font-size: 0.85rem;
+    transition: transform 0.2s;
+}
+
+.crm-btn-action:hover {
+    transform: translateY(-2px);
+    color: white;
+}
+
+.bg-whatsapp { background-color: var(--whatsapp-color); }
+.bg-call { background-color: var(--call-color); }
+.bg-email { background-color: var(--email-color); }
+
+/* Notas e Timeline */
+.crm-body { padding: 0 24px 24px 24px; }
+
+.note-input-container { margin-bottom: 20px; }
+
+.note-input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+}
+
+.note-input:focus { border-color: var(--primary-color); }
+
+.timeline-custom {
+    max-height: 250px;
+    overflow-y: auto;
+    padding-left: 15px;
+    border-left: 2px solid #e2e8f0;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+    padding-left: 15px;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -21px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    background: #cbd5e1;
+    border-radius: 50%;
+}

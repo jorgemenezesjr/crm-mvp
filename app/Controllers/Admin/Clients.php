@@ -146,6 +146,7 @@ class Clients extends BaseController
                     'client_id'  => $json->id,
                     'usuario_id' => auth()->id(), 
                     'empresa_id' => auth()->user()->empresa_id,
+                    'type'       => 'system',
                     'acao'       => "Alterou status de [{$statusAntigo}] para [{$json->status}]",
                 ]);
 
@@ -198,6 +199,95 @@ class Clients extends BaseController
         // 3. Retorna como JSON para o JavaScript
         return $this->response->setJSON($logs);
     }   
+    
+    
+    
+    public function addNota()
+    {
+        // Pega o ID do usuário logado na sessão (ajuste conforme seu sistema de login)
+        $usuarioId = user_id();
+        
+        if (!$usuarioId) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Usuário não autenticado pelo Shield.'
+            ])->setStatusCode(401);
+        }   
+
+        // Captura os dados enviados pelo fetch
+        $clienteId = $this->request->getPost('cliente_id');
+        $mensagem  = $this->request->getPost('mensagem');
+        
+        if (!$clienteId || !$mensagem) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Dados incompletos']);
+        }
+
+        $db = \Config\Database::connect();
+
+        // Dados para inserir
+        $data = [
+            'client_id'  => $clienteId,
+            'usuario_id' => $usuarioId,
+            'acao'       => $mensagem, // Aqui salvamos o texto da nota como uma "ação"
+            'type'       => 'manual',
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+
+        try {
+            $db->table('client_logs')->insert($data);
+
+            return $this->response->setJSON([
+                'status' => 'success'
+            ]);
+        } catch (\Exception $e) {
+            return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
+        }
+    }
+    
+    
+   // Salva ou atualiza o próximo passo
+    public function setNextStep() {
+        $id = $this->request->getPost('id');
+        $desc = $this->request->getPost('desc');
+        $date = $this->request->getPost('date');
+
+        $db = \Config\Database::connect();
+        $db->table('clients')->where('id', $id)->update([
+            'next_step_desc' => $desc,
+            'next_step_at'   => $date
+        ]);
+
+        return $this->response->setJSON(['status' => 'success']);
+    }
+
+    // Conclui a tarefa e joga para o log
+    public function completeNextStep() {
+        $id = $this->request->getPost('id');
+        $db = \Config\Database::connect();
+
+        // 1. Pega os dados atuais antes de apagar
+        $cliente = $db->table('clients')->where('id', $id)->get()->getRow();
+
+        if ($cliente && $cliente->next_step_desc) {
+            // 2. Registra no histórico (logs)
+            $db->table('client_logs')->insert([
+                'client_id'  => $id,
+                'usario_id'    => user_id(),
+                'acao'     => "✅ Tarefa Concluída: " . $cliente->next_step_desc,
+                'type'       => 'manual',
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+
+            // 3. Limpa o agendamento no cliente
+            $db->table('clients')->where('id', $id)->update([
+                'next_step_desc' => null,
+                'next_step_at'   => null
+            ]);
+        }
+
+        return $this->response->setJSON(['status' => 'success']);
+    }
+    
     
     private function formatValue($value) {
         // Remove o ponto de milhar e troca a vírgula decimal por ponto

@@ -21,6 +21,8 @@ $routes->group('admin', ['filter' => 'session'], function ($routes) {
     $routes->get('clientes/kanban', 'Admin\Clients::kanban');
     $routes->post('clientes/updateStatus', 'Admin\Clients::updateStatus');
     $routes->get('admin/dashboard', '\App\Controllers\Admin\Dashboard::index');
+    $routes->post('clientes/addNota', 'Admin\Clients::addNota');
+    
     
     $routes->get('clientes/historico/(:num)', 'Admin\Clients::historico/$1');
     $routes->get('clientes/editar/(:num)', '\App\Controllers\Admin\Clients::edit/$1');
