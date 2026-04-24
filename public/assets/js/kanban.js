@@ -138,7 +138,7 @@ document.addEventListener('keypress', function (e) {
 });
 
 
-
+//LÓGICA DE ABRIR CADA CARD
 document.addEventListener('click', function (e) {
     const btn = e.target.closest('.btn-historico'); // Melhor que classList.contains para evitar erros em sub-elementos
     
@@ -182,7 +182,45 @@ document.addEventListener('click', function (e) {
             .then(response => response.json())
             .then(data => {
                 loader.classList.add('d-none');
-                renderTimeline(data);
+                // 1. Renderiza o histórico (seus logs antigos)
+                // Se o seu PHP retornar um objeto com { logs: [], next_step_desc: ... }
+                // ajuste para renderTimeline(data.logs);
+                
+                // CORREÇÃO: Enviar apenas a chave 'logs' para a função de desenho
+                    if (data.logs) {
+                        renderTimeline(data.logs); 
+                    } else {
+                        renderTimeline([]); // Se não houver nada, envia vazio
+                    }               
+                
+                
+                // --- NOVA LÓGICA DE ALTERNÂNCIA DE ESTADOS ---
+                const formTarefa = document.getElementById('form-tarefa');
+                const displayTarefa = document.getElementById('display-tarefa');
+                const inputId = document.getElementById('modal-cliente-id');
+
+                // Garante que o ID do cliente está salvo na modal para o agendamento saber quem ele é
+                if (inputId) inputId.value = clientId;
+
+                // Verifica se o cliente já tem uma tarefa pendente
+                if (data.next_step_desc && data.next_step_desc.trim() !== "") {
+                    // ESTADO: Tarefa Ativa (Mostra o checkbox e a descrição)
+                    formTarefa.classList.add('d-none');
+                    displayTarefa.classList.remove('d-none');
+
+                    document.getElementById('lbl-tarefa-desc').innerText = data.next_step_desc;
+
+                    // Formata a data se ela existir
+                    let dataFormatada = data.next_step_at ? new Date(data.next_step_at + 'T12:00:00').toLocaleDateString('pt-BR') : 'Sem data';
+                    document.getElementById('lbl-tarefa-data').innerText = 'Retorno em: ' + dataFormatada;
+                } else {
+                    // ESTADO: Criar Novo (Mostra os campos de input vazios)
+                    formTarefa.classList.remove('d-none');
+                    displayTarefa.classList.add('d-none');
+
+                    document.getElementById('input-next-desc').value = '';
+                    document.getElementById('input-next-date').value = '';
+                }
             })
             .catch(error => {
                 loader.classList.add('d-none');
@@ -192,6 +230,66 @@ document.addEventListener('click', function (e) {
     }
 });
 
+
+// --- EVENTO: SALVAR AGENDAMENTO ---
+document.addEventListener('click', function(e) {
+    if (e.target && e.target.id === 'btn-save-next') {
+        const id = document.getElementById('modal-cliente-id').value;
+        const desc = document.getElementById('input-next-desc').value;
+        const date = document.getElementById('input-next-date').value;
+
+        if (!desc) return alert("Descreva o que precisa ser feito.");
+
+        fetch(`${window.location.origin}/admin/clientes/setNextStep`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `id=${id}&desc=${encodeURIComponent(desc)}&date=${date}`
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Troca o visual para "Tarefa Ativa"
+                document.getElementById('form-tarefa').classList.add('d-none');
+                document.getElementById('display-tarefa').classList.remove('d-none');
+                document.getElementById('lbl-tarefa-desc').innerText = desc;
+                
+                let dataFormatada = date ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR') : 'Sem data';
+                document.getElementById('lbl-tarefa-data').innerText = 'Prazo: ' + dataFormatada;
+            }
+        });
+    }
+});
+
+// --- EVENTO: CONCLUIR TAREFA (CHECKBOX) ---
+document.addEventListener('change', function(e) {
+    if (e.target && e.target.id === 'check-concluir') {
+        if (e.target.checked) {
+            const id = document.getElementById('modal-cliente-id').value;
+            
+            fetch(`${window.location.origin}/admin/clientes/completeNextStep`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `id=${id}`
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // 1. Reset visual do widget
+                    document.getElementById('display-tarefa').classList.add('d-none');
+                    document.getElementById('form-tarefa').classList.remove('d-none');
+                    document.getElementById('input-next-desc').value = '';
+                    document.getElementById('input-next-date').value = '';
+                    e.target.checked = false;
+
+                    // 2. ATUALIZAÇÃO EM TEMPO REAL:
+                    // Chamamos a mesma função que você usa para abrir a modal 
+                    // ou apenas o fetch do histórico. Exemplo:
+                    atualizarHistoricoLog(id);
+                }
+            });
+        }
+    }
+});
 
 
 
@@ -270,4 +368,18 @@ function atualizarTotaisDinamicamente() {
             });
         }
     });
+}
+
+
+
+// Função auxiliar para não repetir código
+function atualizarHistoricoLog(clientId) {
+    const timeline = document.getElementById('timeline-historico');
+    
+    fetch(`${window.location.origin}/admin/clientes/historico/${clientId}`)
+        .then(response => response.json())
+        .then(data => {
+            // Usa a sua função que já existe para desenhar a timeline
+            renderTimeline(data.logs || data);
+        });
 }

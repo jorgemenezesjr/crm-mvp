@@ -178,6 +178,8 @@
             </div>
 
             <div class="crm-body">
+                <input type="hidden" id="modal-cliente-id">
+
                 <div class="note-input-container">
                     <input type="text" id="noteInput" class="note-input" placeholder="Nota rápida + Enter...">
                 </div>
@@ -188,40 +190,41 @@
                     <div class="spinner-border spinner-border-sm text-primary"></div>
                 </div>
 
-                <div class="timeline-custom" id="timeline-historico">
-                    </div>
-            </div>
-            
-            <div id="next-step-container" class="mt-3 p-3 border rounded shadow-sm" style="background-color: #fffdec; border-color: #ffeeb2 !important;">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <small class="fw-bold text-dark"><i class="fas fa-thumbtack me-1 text-warning"></i> PRÓXIMO PASSO</small>
+                <div class="timeline-custom" id="timeline-historico" style="max-height: 250px; overflow-y: auto;">
                 </div>
 
-                <div id="display-tarefa" class="d-none">
-                    <div class="d-flex align-items-start gap-2">
-                        <input type="checkbox" class="form-check-input mt-1" id="check-concluir" style="cursor:pointer">
-                        <div class="flex-grow-1">
-                            <div id="lbl-tarefa-desc" class="fw-bold small text-dark" style="line-height: 1.2;"></div>
-                            <small id="lbl-tarefa-data" class="text-muted" style="font-size: 11px;"></small>
-                        </div>
+                <div id="next-step-container" class="mt-4 p-3 border rounded shadow-sm" style="background-color: #fffdec; border-color: #ffeeb2 !important;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="fw-bold text-dark"><i class="fas fa-thumbtack me-1 text-warning"></i> PRÓXIMO PASSO</small>
                     </div>
-                </div>
 
-                <div id="form-tarefa">
-                    <div class="row g-1">
-                        <div class="col-8">
-                            <input type="text" id="input-next-desc" class="form-control form-control-sm" placeholder="O que fazer a seguir?">
-                        </div>
-                        <div class="col-4">
-                            <input type="date" id="input-next-date" class="form-control form-control-sm">
+                    <div id="display-tarefa" class="d-none">
+                        <div class="d-flex align-items-start gap-2">
+                            <input type="checkbox" class="form-check-input mt-1" id="check-concluir" style="cursor:pointer">
+                            <div class="flex-grow-1">
+                                <div id="lbl-tarefa-desc" class="fw-bold small text-dark" style="line-height: 1.2;"></div>
+                                <small id="lbl-tarefa-data" class="text-muted" style="font-size: 11px;"></small>
+                            </div>
                         </div>
                     </div>
-                    <button type="button" id="btn-save-next" class="btn btn-warning btn-sm w-100 mt-2 fw-bold" style="font-size: 11px;">
-                        AGENDAR RETORNO
-                    </button>
-                </div>
-            </div>
+
+                    <div id="form-tarefa">
+                        <div class="row g-1">
+                            <div class="col-8">
+                                <input type="text" id="input-next-desc" class="form-control form-control-sm" placeholder="O que fazer a seguir?">
+                            </div>
+                            <div class="col-4">
+                                <input type="date" id="input-next-date" class="form-control form-control-sm">
+                            </div>
+                        </div>
+                        <button type="button" id="btn-save-next" class="btn btn-warning btn-sm w-100 mt-2 fw-bold" style="font-size: 11px;">
+                            AGENDAR RETORNO
+                        </button>
+                    </div>
+                </div> 
+            </div> 
             
+
         </div>
     </div>
 </div>

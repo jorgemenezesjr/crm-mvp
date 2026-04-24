@@ -22,6 +22,8 @@ $routes->group('admin', ['filter' => 'session'], function ($routes) {
     $routes->post('clientes/updateStatus', 'Admin\Clients::updateStatus');
     $routes->get('admin/dashboard', '\App\Controllers\Admin\Dashboard::index');
     $routes->post('clientes/addNota', 'Admin\Clients::addNota');
+    $routes->post('clientes/setNextStep', 'Admin\Clients::setNextStep');
+    $routes->post('clientes/completeNextStep', 'Admin\Clients::completeNextStep');
     
     
     $routes->get('clientes/historico/(:num)', 'Admin\Clients::historico/$1');

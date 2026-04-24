@@ -180,25 +180,39 @@ class Clients extends BaseController
                          ->with('message', 'Cliente removido com sucesso!');
     }
     
-    
+   
     public function historico($id)
     {
-        // 1. Conecta ao banco
-        $db = \Config\Database::connect();
+        try {
+            $db = \Config\Database::connect();
 
-        // 2. Monta a consulta com Join para pegar o nome do usuário
-        // Ajuste 'username' para 'name' caso sua tabela de usuários use outro nome
-        $builder = $db->table('client_logs');
-        $builder->select('client_logs.acao, client_logs.created_at, users.username as usuario_nome');
-        $builder->join('users', 'users.id = client_logs.usuario_id', 'left');
-        $builder->where('client_id', $id);
-        $builder->orderBy('client_logs.created_at', 'DESC');
+            // 1. Busca os logs
+            $builder = $db->table('client_logs');
+            $builder->select('client_logs.acao, client_logs.created_at, users.username as usuario_nome');
+            $builder->join('users', 'users.id = client_logs.usuario_id', 'left');
+            $builder->where('client_id', $id);
+            $builder->orderBy('client_logs.created_at', 'DESC');
+            $logs = $builder->get()->getResultArray();
 
-        $logs = $builder->get()->getResultArray();
+            // 2. Busca os dados do cliente (evitando erro se o cliente não existir)
+            $cliente = $db->table('clients')
+                          ->select('next_step_desc, next_step_at')
+                          ->where('id', $id)
+                          ->get()
+                          ->getRowArray();
 
-        // 3. Retorna como JSON para o JavaScript
-        return $this->response->setJSON($logs);
-    }   
+            // 3. Retorna o objeto estruturado
+            return $this->response->setJSON([
+                'logs'           => $logs ?: [], // Se for nulo, retorna array vazio
+                'next_step_desc' => $cliente['next_step_desc'] ?? null,
+                'next_step_at'   => $cliente['next_step_at']   ?? null
+            ]);
+
+        } catch (\Exception $e) {
+            // Se der erro, avisa o que foi
+            return $this->response->setStatusCode(500)->setJSON(['error' => $e->getMessage()]);
+        }
+    }
     
     
     
@@ -272,7 +286,7 @@ class Clients extends BaseController
             // 2. Registra no histórico (logs)
             $db->table('client_logs')->insert([
                 'client_id'  => $id,
-                'usario_id'    => user_id(),
+                'usuario_id'    => user_id(),
                 'acao'     => "✅ Tarefa Concluída: " . $cliente->next_step_desc,
                 'type'       => 'manual',
                 'created_at' => date('Y-m-d H:i:s')
