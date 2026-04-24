@@ -1,3 +1,144 @@
+/**
+ * Lógica do Kanban - CRM
+ */
+document.addEventListener('DOMContentLoaded', function () {
+    const container = document.getElementById('kanban-container');
+    const endpoint  = container.getAttribute('data-url'); // Pega a URL da View
+    const colunas   = document.querySelectorAll('.kanban-column');
+
+    // 1. Configuração do Drag and Drop (Sortable)
+    colunas.forEach(coluna => {
+        new Sortable(coluna, {
+            group: 'kanban',
+            animation: 150,
+            ghostClass: 'bg-light-blue',
+            onEnd: function (evt) {
+                // 1. Pega o ID do elemento HTML que foi movido (ex: "client-5")
+                const itemId = evt.item.id; 
+
+                // 2. Remove o prefixo para pegar só o número (o ID do banco)
+                const clientId = itemId.replace('client-', ''); 
+
+                // 3. Pega o ID da coluna onde o card caiu (o novo status)
+                const newStatus = evt.to.id; 
+
+                const url = document.getElementById('kanban-container').getAttribute('data-url');
+
+                // Agora o fetch vai funcionar porque 'clientId' existe!
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="X-CSRF-TOKEN"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        id: clientId, // <--- Aqui o JS não vai mais reclamar
+                        status: newStatus
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status !== 'success') {
+                        alert('Erro ao salvar no banco!');
+                        location.reload(); // Recarrega para voltar o card pro lugar original
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro de conexão!');
+                });
+  
+                atualizarTotaisDinamicamente();
+                
+            },
+        });
+    });
+    
+    // 2. Lógica do Filtro de Busca
+    const searchInput = document.getElementById('kanban-search');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            let searchTerm = this.value.toLowerCase();
+            let cards = document.querySelectorAll('.draggable');
+
+            cards.forEach(card => {
+                let clientName = card.querySelector('.fw-bold').innerText.toLowerCase();
+                
+                if (clientName.includes(searchTerm)) {
+                    card.style.display = "block";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        });
+    }
+    
+});
+
+
+
+// LÓGICA DE SALVAR NOTA COM ENTER
+document.addEventListener('keypress', function (e) {
+    if (e.target.id === 'noteInput' && e.key === 'Enter') {
+        const input = e.target;
+        const mensagem = input.value.trim();
+        const clienteId = input.getAttribute('data-id-cliente');
+
+        if (mensagem !== '') {
+            input.disabled = true;
+
+        // No kanban.js (dentro do evento de Keypress Enter)
+        fetch(`${window.location.origin}/admin/clientes/addNota`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `cliente_id=${clienteId}&mensagem=${encodeURIComponent(mensagem)}`
+        })
+        .then(response => response.json())
+        .then(res => {
+            console.log('Resposta do servidor:', res); // <--- DEBUG: Veja isso no F12
+
+            if (res.status === 'success') {
+                const agora = new Date().toLocaleString('pt-BR');
+                const timeline = document.getElementById('timeline-historico');
+
+                // 1. Criar o HTML da nova nota
+                const novaNotaHtml = `
+                    <div class="timeline-item border-start ps-3 pb-3 position-relative" style="margin-left: 10px; animation: highlight 2s ease-out;">
+                        <div style="position: absolute; left: -6px; top: 5px; width: 10px; height: 10px; background: #4f46e5; border-radius: 50%;"></div>
+                        <small class="text-muted fw-bold d-block">${agora} - Você</small>
+                        <div class="text-dark small">${mensagem}</div>
+                    </div>`;
+
+                // 2. CORREÇÃO: Se houver mensagem de "Nenhum registro", limpa ANTES de inserir
+                if (timeline.querySelector('.alert-info') || timeline.innerText.includes('Nenhum registro')) {
+                    timeline.innerHTML = '';
+                }
+
+                // 3. Insere no topo
+                timeline.insertAdjacentHTML('afterbegin', novaNotaHtml);
+
+                // 4. Limpa e foca o campo
+                input.value = '';
+                input.disabled = false;
+                input.focus();
+
+            } else {
+                alert('Erro: ' + (res.message || 'Falha ao salvar'));
+            }
+            input.disabled = false;
+            input.focus();
+        })
+        .catch(err => {
+            console.error('Erro no Fetch:', err);
+            input.disabled = false;
+        });
+        }
+    }
+});
+
+
+
 document.addEventListener('click', function (e) {
     const btn = e.target.closest('.btn-historico'); // Melhor que classList.contains para evitar erros em sub-elementos
     
@@ -51,6 +192,38 @@ document.addEventListener('click', function (e) {
     }
 });
 
+
+
+
+function saveStatus(id, status, url) {
+    const params = new URLSearchParams();
+    params.append('id', id);
+    params.append('status', status);
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="X-CSRF-TOKEN"]').getAttribute('content')
+    },
+        body: JSON.stringify({
+        id: clientId,
+        status: newStatus
+    })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            alert('Erro ao mover cliente.');
+            location.reload(); // Recarrega para voltar o card se deu erro
+        }
+    })
+    .catch(error => console.error('Erro:', error));
+}
+
+
+
 // FUNÇÃO PARA RENDERIZAR A TIMELINE
 function renderTimeline(data) {
     const timeline = document.getElementById('timeline-historico');
@@ -72,62 +245,29 @@ function renderTimeline(data) {
     timeline.innerHTML = html;
 }
 
-// LÓGICA DE SALVAR NOTA COM ENTER
-document.addEventListener('keypress', function (e) {
-    if (e.target.id === 'noteInput' && e.key === 'Enter') {
-        const input = e.target;
-        const mensagem = input.value.trim();
-        const clienteId = input.getAttribute('data-id-cliente');
-
-        if (mensagem !== '') {
-            input.disabled = true;
-
-        // No kanban.js (dentro do evento de Keypress Enter)
-        fetch(`${window.location.origin}/admin/clientes/addNota`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `cliente_id=${clienteId}&mensagem=${encodeURIComponent(mensagem)}`
-        })
-        .then(response => response.json())
-        .then(res => {
-            console.log('Resposta do servidor:', res); // <--- DEBUG: Veja isso no F12
-
-            if (res.status === 'success') {
- 
-                const agora = new Date().toLocaleString('pt-BR');
-
-                // Cria o HTML da nova nota
-                const novaNotaHtml = `
-                    <div class="timeline-item border-start ps-3 pb-3 position-relative" style="margin-left: 10px; animation: highlight 2s ease-out;">
-                        <div style="position: absolute; left: -6px; top: 5px; width: 10px; height: 10px; background: #4f46e5; border-radius: 50%;"></div>
-                        <small class="text-muted fw-bold d-block">${agora} - Você</small>
-                        <div class="text-dark small">${mensagem}</div>
-                    </div>`;
-
-                const timeline = document.getElementById('timeline-historico');
-                timeline.insertAdjacentHTML('afterbegin', novaNotaHtml);
-                // Faz o scroll voltar para o topo para mostrar que a nota entrou
-                timeline.scrollTop = 0;
-                
-
-                // Remove mensagem de "Nenhum registro" se ela existir
-                if (timeline.innerHTML.includes('alert-info') || timeline.innerHTML.includes('Nenhum registro')) {
-                    timeline.innerHTML = '';
-                }
 
 
-                input.value = ''; // Limpa o campo
-            } else {
-                alert('Erro: ' + (res.message || 'Falha ao salvar'));
-            }
-            input.disabled = false;
-            input.focus();
-        })
-        .catch(err => {
-            console.error('Erro no Fetch:', err);
-            input.disabled = false;
+
+function atualizarTotaisDinamicamente() {
+    const colunas = ['lead', 'proposta', 'negociacao', 'fechado'];
+
+    colunas.forEach(idColuna => {
+        const coluna = document.getElementById(idColuna);
+        const cards = coluna.querySelectorAll('.draggable');
+        let soma = 0;
+
+        cards.forEach(card => {
+            // Pega o valor puro que colocamos no data-valor
+            soma += parseFloat(card.getAttribute('data-valor')) || 0;
         });
-        }
-    }
-});
 
+        // Seleciona o badge pelo ID que criamos
+        const badge = document.getElementById(`total-${idColuna}`);
+        if (badge) {
+            badge.innerText = soma.toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            });
+        }
+    });
+}
