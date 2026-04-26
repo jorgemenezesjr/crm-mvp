@@ -1,3 +1,15 @@
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+});
+
 /**
  * Lógica do Kanban - CRM
  */
@@ -40,13 +52,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(response => response.json())
                 .then(data => {
                     if (data.status !== 'success') {
-                        alert('Erro ao salvar no banco!');
-                        location.reload(); // Recarrega para voltar o card pro lugar original
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Ops!',
+                            text: 'Erro ao salvar no banco!',
+                            confirmButtonText: 'Entendido'
+                        }).then(() => location.reload()); // Recarrega para voltar o card pro lugar original
+                    } else {
+                        // Feedback visual de sucesso opcional
+                        Toast.fire({ icon: 'success', title: 'Status atualizado!' });
                     }
                 })
                 .catch(error => {
-                    console.error('Erro:', error);
-                    alert('Erro de conexão!');
+                    Swal.fire('Erro de conexão', 'Verifique sua internet ou o servidor.', 'error');
                 });
   
                 atualizarTotaisDinamicamente();
@@ -124,7 +142,11 @@ document.addEventListener('keypress', function (e) {
                 input.focus();
 
             } else {
-                alert('Erro: ' + (res.message || 'Falha ao salvar'));
+                Swal.fire({
+                icon: 'error',
+                title: 'Falha ao salvar nota',
+                text: res.message || 'Ocorreu um erro inesperado.'
+            });
             }
             input.disabled = false;
             input.focus();
@@ -227,6 +249,13 @@ document.addEventListener('click', function (e) {
                 timeline.innerHTML = '<div class="alert alert-danger">Erro ao carregar histórico.</div>';
                 console.error('Erro:', error);
             });
+        
+        // 5. Impede seleção de datas retroativas
+        const inputData = document.getElementById('input-next-date'); // Ajuste para o ID real do seu input
+        if (inputData) {
+            const hoje = new Date().toISOString().split('T')[0];
+            inputData.setAttribute('min', hoje);
+        }
     }
 });
 
@@ -238,7 +267,13 @@ document.addEventListener('click', function(e) {
         const desc = document.getElementById('input-next-desc').value;
         const date = document.getElementById('input-next-date').value;
 
-        if (!desc) return alert("Descreva o que precisa ser feito.");
+        if (!desc){
+            return Swal.fire({
+                icon: 'warning',
+                title: 'Atenção',
+                text: 'Descreva o que precisa ser feito no agendamento.'
+            });
+        } 
 
         fetch(`${window.location.origin}/admin/clientes/setNextStep`, {
             method: 'POST',
@@ -248,6 +283,7 @@ document.addEventListener('click', function(e) {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
+                Toast.fire({ icon: 'success', title: 'Agendado!' });
                 // Troca o visual para "Tarefa Ativa"
                 document.getElementById('form-tarefa').classList.add('d-none');
                 document.getElementById('display-tarefa').classList.remove('d-none');
@@ -274,6 +310,7 @@ document.addEventListener('change', function(e) {
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
+                    Toast.fire({ icon: 'success', title: 'Tarefa concluída!' });
                     // 1. Reset visual do widget
                     document.getElementById('display-tarefa').classList.add('d-none');
                     document.getElementById('form-tarefa').classList.remove('d-none');
@@ -285,6 +322,15 @@ document.addEventListener('change', function(e) {
                     // Chamamos a mesma função que você usa para abrir a modal 
                     // ou apenas o fetch do histórico. Exemplo:
                     atualizarHistoricoLog(id);
+                    
+                    // 3. Dentro do .then(res => { if(res.status === 'success') ...
+                    const cardId = document.getElementById('modal-cliente-id').value;
+                    const cardElement = document.getElementById(`client-${cardId}`);
+                    const badge = cardElement.querySelector('.badge.bg-danger, .badge.bg-warning, .badge.bg-info');
+
+                    if (badge) {
+                        badge.remove(); // Remove o ícone de agendamento do card instantaneamente
+                    }
                 }
             });
         }

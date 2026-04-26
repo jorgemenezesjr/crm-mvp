@@ -35,6 +35,37 @@
     border: 2px solid #0d6efd !important;
     }
 
+    
+    /* 1. O container que o SortableJS move */
+    .kanban-item-container {
+        position: relative !important;
+        overflow: visible !important; /* Permite que o badge flutue para fora */
+        cursor: grab;
+        display: block;
+        margin-top: 15px; /* Espaço para a orelha */
+    }
+
+    /* 2. A Orelha (Badge) */
+    .kanban-orelha-fixa {
+        position: absolute !important;
+        top: -10px !important;    /* Posiciona fora do card */
+        left: 12px !important;    /* Alinha à esquerda */
+        z-index: 10;
+        font-size: 0.7rem !important;
+        pointer-events: none;     /* Clique passa por ele e pega o draggable */
+    }
+
+    /* 3. Resetando o estilo do Card interno */
+    .inner-card-visual {
+        margin-bottom: 0 !important; /* Remove margem dupla */
+        /* Aqui o card herda a borda esquerda que você já tem no seu CSS */
+    }
+
+    /* Ajuste para o SortableJS não bugar o visual no arrasto */
+    .sortable-ghost {
+        opacity: 0.4;
+    }
+    
     /* Cores das bordas dos cards por status */
     #lead .draggable { border-left-color: #0d6efd; }
     #proposta .draggable { border-left-color: #ffc107; }

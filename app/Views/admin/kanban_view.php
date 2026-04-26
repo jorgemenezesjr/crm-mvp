@@ -27,20 +27,48 @@
                     <div class="card-body kanban-column" id="lead">
                         <?php foreach ($clientes as $c): ?>
                             <?php if ($c['status'] == 'lead'): ?>
-                                <div class="card mb-2 shadow-sm draggable" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>">
-                                    <div class="card-body p-2">
-                                        <div class="fw-bold text-dark btn-historico" 
-                                             data-id="<?= $c['id'] ?>" 
-                                             data-nome="<?= esc($c['nome']) ?>"
-                                             style="cursor: pointer;">
-                                             <?= $c['nome'] ?>
-                                        </div>
+                                <?php 
+                                    $hoje = date('Y-m-d');
+                                    $statusTarefa = '';
+                                    $badgeClass = '';
 
-                                        <div class="small text-muted"><?= $c['telefone'] ?></div>
-                                        <div class="mt-1 d-flex justify-content-between align-items-center">
-                                            <span class="badge bg-light text-success border">
-                                                R$ <?= number_format($c['valor'] ?? 0, 2, ',', '.') ?>
-                                            </span>
+                                    if (!empty($c['next_step_at'])) {
+                                        if ($c['next_step_at'] < $hoje) {
+                                            $statusTarefa = 'Atrasado';
+                                            $badgeClass = 'bg-danger';
+                                        } elseif ($c['next_step_at'] == $hoje) {
+                                            $statusTarefa = 'Hoje';
+                                            $badgeClass = 'bg-warning text-dark';
+                                        } else {
+                                            $statusTarefa = date('d/m', strtotime($c['next_step_at']));
+                                            $badgeClass = 'bg-info';
+                                        }
+                                    }
+                                ?>
+
+                        
+                                <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>">
+                                    <?php if ($statusTarefa): ?>
+                                        <span class="badge <?= $badgeClass ?> shadow-sm kanban-orelha-fixa">
+                                            <i class="fas fa-calendar-check me-1"></i> <?= $statusTarefa ?>
+                                        </span>
+                                    <?php endif; ?>
+                                    <div class="card mb-2 inner-card-visual">
+                                        <div class="card-body p-2">
+                                            <div class="fw-bold text-dark btn-historico" 
+                                                 data-id="<?= $c['id'] ?>" 
+                                                 data-nome="<?= esc($c['nome']) ?>"
+                                                 style="cursor: pointer;">
+                                                 <?= $c['nome'] ?>
+                                            </div>
+
+                                            <div class="small text-muted"><?= $c['telefone'] ?></div>
+                                            <div class="mt-1 d-flex justify-content-between align-items-center">
+                                                <span class="badge bg-light text-success border">
+                                                    R$ <?= number_format($c['valor'] ?? 0, 2, ',', '.') ?>
+                                                </span>
+                                            </div>
+
                                         </div>
                                     </div>
                                 </div>
@@ -61,7 +89,32 @@
                     <div class="card-body kanban-column" id="proposta">
                         <?php foreach ($clientes as $c): ?>
                             <?php if ($c['status'] == 'proposta'): ?>
-                                <div class="card mb-2 shadow-sm draggable" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>">
+                        <?php 
+                            $hoje = date('Y-m-d');
+                            $statusTarefa = '';
+                            $badgeClass = '';
+
+                            if (!empty($c['next_step_at'])) {
+                                if ($c['next_step_at'] < $hoje) {
+                                    $statusTarefa = 'Atrasado';
+                                    $badgeClass = 'bg-danger';
+                                } elseif ($c['next_step_at'] == $hoje) {
+                                    $statusTarefa = 'Hoje';
+                                    $badgeClass = 'bg-warning text-dark';
+                                } else {
+                                    $statusTarefa = date('d/m', strtotime($c['next_step_at']));
+                                    $badgeClass = 'bg-info';
+                                }
+                            }
+                            ?>
+                            <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>">
+                                <?php if ($statusTarefa): ?>
+                                    <span class="badge <?= $badgeClass ?> shadow-sm kanban-orelha-fixa">
+                                        <i class="fas fa-calendar-check me-1"></i> <?= $statusTarefa ?>
+                                    </span>
+                                <?php endif; ?>
+
+                                <div class="card mb-2 inner-card-visual">
                                     <div class="card-body p-2">
                                         <div class="fw-bold text-dark btn-historico" 
                                              data-id="<?= $c['id'] ?>" 
@@ -77,6 +130,7 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
                             <?php endif; ?>
                         <?php endforeach; ?>
                     </div>
@@ -94,19 +148,45 @@
                     <div class="card-body kanban-column" id="negociacao">
                         <?php foreach ($clientes as $c): ?>
                             <?php if ($c['status'] == 'negociacao'): ?>
-                                <div class="card mb-2 shadow-sm draggable" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>">
-                                    <div class="card-body p-2">
-                                        <div class="fw-bold text-dark btn-historico" 
-                                             data-id="<?= $c['id'] ?>" 
-                                             data-nome="<?= esc($c['nome']) ?>"
-                                             style="cursor: pointer;">
-                                             <?= $c['nome'] ?>
-                                        </div>
-                                        <div class="small text-muted"><?= $c['telefone'] ?></div>
-                                        <div class="mt-1 d-flex justify-content-between align-items-center">
-                                            <span class="badge bg-light text-success border">
-                                                R$ <?= number_format($c['valor'] ?? 0, 2, ',', '.') ?>
-                                            </span>
+                        <?php 
+                            $hoje = date('Y-m-d');
+                            $statusTarefa = '';
+                            $badgeClass = '';
+
+                            if (!empty($c['next_step_at'])) {
+                                if ($c['next_step_at'] < $hoje) {
+                                    $statusTarefa = 'Atrasado';
+                                    $badgeClass = 'bg-danger';
+                                } elseif ($c['next_step_at'] == $hoje) {
+                                    $statusTarefa = 'Hoje';
+                                    $badgeClass = 'bg-warning text-dark';
+                                } else {
+                                    $statusTarefa = date('d/m', strtotime($c['next_step_at']));
+                                    $badgeClass = 'bg-info';
+                                }
+                            }
+                        ?>
+
+                                <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>">
+                                    <?php if ($statusTarefa): ?>
+                                        <span class="badge <?= $badgeClass ?> shadow-sm kanban-orelha-fixa" style="font-size: 0.7rem;">
+                                            <i class="fas fa-calendar-check me-1"></i> <?= $statusTarefa ?>
+                                        </span>
+                                    <?php endif; ?>
+                                    <div class="card mb-2 inner-card-visual">
+                                        <div class="card-body p-2">
+                                            <div class="fw-bold text-dark btn-historico" 
+                                                 data-id="<?= $c['id'] ?>" 
+                                                 data-nome="<?= esc($c['nome']) ?>"
+                                                 style="cursor: pointer;">
+                                                 <?= $c['nome'] ?>
+                                            </div>
+                                            <div class="small text-muted"><?= $c['telefone'] ?></div>
+                                            <div class="mt-1 d-flex justify-content-between align-items-center">
+                                                <span class="badge bg-light text-success border">
+                                                    R$ <?= number_format($c['valor'] ?? 0, 2, ',', '.') ?>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -128,19 +208,46 @@
                     <div class="card-body kanban-column" id="fechado">
                         <?php foreach ($clientes as $c): ?>
                             <?php if ($c['status'] == 'fechado'): ?>
-                                <div class="card mb-2 shadow-sm draggable" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>">
-                                    <div class="card-body p-2">
-                                        <div class="fw-bold text-dark btn-historico" 
-                                             data-id="<?= $c['id'] ?>" 
-                                             data-nome="<?= esc($c['nome']) ?>"
-                                             style="cursor: pointer;">
-                                             <?= $c['nome'] ?>
-                                        </div>
-                                        <div class="small text-muted"><?= $c['telefone'] ?></div>
-                                        <div class="mt-1 d-flex justify-content-between align-items-center">
-                                            <span class="badge bg-light text-success border">
-                                                R$ <?= number_format($c['valor'] ?? 0, 2, ',', '.') ?>
-                                            </span>
+                        <?php 
+                            $hoje = date('Y-m-d');
+                            $statusTarefa = '';
+                            $badgeClass = '';
+
+                            if (!empty($c['next_step_at'])) {
+                                if ($c['next_step_at'] < $hoje) {
+                                    $statusTarefa = 'Atrasado';
+                                    $badgeClass = 'bg-danger';
+                                } elseif ($c['next_step_at'] == $hoje) {
+                                    $statusTarefa = 'Hoje';
+                                    $badgeClass = 'bg-warning text-dark';
+                                } else {
+                                    $statusTarefa = date('d/m', strtotime($c['next_step_at']));
+                                    $badgeClass = 'bg-info';
+                                }
+                            }
+                        ?>
+
+                        
+                                <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>">
+                                    <?php if ($statusTarefa): ?>
+                                        <span class="badge <?= $badgeClass ?> shadow-sm kanban-orelha-fixa" style="font-size: 0.7rem;">
+                                            <i class="fas fa-calendar-check me-1"></i> <?= $statusTarefa ?>
+                                        </span>
+                                    <?php endif; ?>
+                                    <div class="card mb-2 inner-card-visual">
+                                        <div class="card-body p-2">
+                                            <div class="fw-bold text-dark btn-historico" 
+                                                 data-id="<?= $c['id'] ?>" 
+                                                 data-nome="<?= esc($c['nome']) ?>"
+                                                 style="cursor: pointer;">
+                                                 <?= $c['nome'] ?>
+                                            </div>
+                                            <div class="small text-muted"><?= $c['telefone'] ?></div>
+                                            <div class="mt-1 d-flex justify-content-between align-items-center">
+                                                <span class="badge bg-light text-success border">
+                                                    R$ <?= number_format($c['valor'] ?? 0, 2, ',', '.') ?>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
