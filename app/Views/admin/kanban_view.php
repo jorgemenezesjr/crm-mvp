@@ -259,6 +259,14 @@
 
         </div>
     </div>
+    <div id="drop-zones" class="d-flex justify-content-center gap-3 d-none" style="position: fixed; bottom: 20px; left: 0; right: 0; z-index: 9999;">
+        <div id="zone-success" class="drop-zone bg-success text-white p-3 rounded shadow-lg border border-2 border-light" style="min-width: 200px; text-align: center;">
+            <i class="fas fa-troféu me-2"></i> SOLTE PARA GANHAR
+        </div>
+        <div id="zone-danger" class="drop-zone bg-danger text-white p-3 rounded shadow-lg border border-2 border-light" style="min-width: 200px; text-align: center;">
+            <i class="fas fa-thumbs-down me-2"></i> SOLTE PARA PERDER
+        </div>
+    </div>
 </div>
 <div class="modal fade" id="modalHistorico" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

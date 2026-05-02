@@ -72,4 +72,27 @@
     #negociacao .draggable { border-left-color: #17a2b8; }
     #fechado .draggable { border-left-color: #198754; }
     
-   
+   .drop-zone {
+    opacity: 0.8;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border-style: dashed !important;
+}
+
+    /* Quando o card passar por cima da zona */
+    .drop-zone.drag-over {
+        opacity: 1;
+        transform: scale(1.1);
+        border-style: solid !important;
+    }
+    
+    /* Garante que o card sendo arrastado fique visível sobre tudo */
+    .sortable-fallback {
+        z-index: 10000 !important;
+    }
+
+    /* Feedback visual quando o card está em cima do botão */
+    .drop-zone.sortable-chosen {
+        transform: scale(1.05);
+        border: 2px solid white !important;
+    }

@@ -14,66 +14,78 @@ const Toast = Swal.mixin({
  * Lógica do Kanban - CRM
  */
 document.addEventListener('DOMContentLoaded', function () {
-    const container = document.getElementById('kanban-container');
-    const endpoint  = container.getAttribute('data-url'); // Pega a URL da View
-    const colunas   = document.querySelectorAll('.kanban-column');
+        const container = document.getElementById('kanban-container');
+        const endpoint  = container.getAttribute('data-url'); 
+        const colunas   = document.querySelectorAll('.kanban-column');
 
-    // 1. Configuração do Drag and Drop (Sortable)
-    colunas.forEach(coluna => {
-        new Sortable(coluna, {
-            group: 'kanban',
-            animation: 150,
-            ghostClass: 'bg-light-blue',
-            onEnd: function (evt) {
-                // 1. Pega o ID do elemento HTML que foi movido (ex: "client-5")
-                const itemId = evt.item.id; 
+        // 1. Configuração das Colunas (Seu código do GitHub)
+        colunas.forEach(coluna => {
+            new Sortable(coluna, {
+                group: 'kanban',
+                animation: 150,
+                ghostClass: 'bg-light-blue',
+                onStart: function () {
+                    // Mostra os botões ao arrastar
+                    const zones = document.getElementById('drop-zones');
+                    if(zones) zones.classList.remove('d-none');
+                },
+                onEnd: function (evt) {
+                    // Esconde os botões ao soltar
+                    const zones = document.getElementById('drop-zones');
+                    if(zones) zones.classList.add('d-none');
 
-                // 2. Remove o prefixo para pegar só o número (o ID do banco)
-                const clientId = itemId.replace('client-', ''); 
+                    const clientId = evt.item.id.replace('client-', '');
+                    const newStatus = evt.to.id;
 
-                // 3. Pega o ID da coluna onde o card caiu (o novo status)
-                const newStatus = evt.to.id; 
-
-                const url = document.getElementById('kanban-container').getAttribute('data-url');
-
-                // Agora o fetch vai funcionar porque 'clientId' existe!
-                fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="X-CSRF-TOKEN"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({
-                        id: clientId, // <--- Aqui o JS não vai mais reclamar
-                        status: newStatus
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status !== 'success') {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Ops!',
-                            text: 'Erro ao salvar no banco!',
-                            confirmButtonText: 'Entendido'
-                        }).then(() => location.reload()); // Recarrega para voltar o card pro lugar original
-                    } else {
-                        // Feedback visual de sucesso opcional
-                        Toast.fire({ icon: 'success', title: 'Status atualizado!' });
+                    // --- AQUI ESTÁ O PULO DO GATO ---
+                    // Se o destino for um botão, NÃO faz o fetch de movimentação
+                    if (newStatus === 'zone-success' || newStatus === 'zone-danger') {
+                        return; 
                     }
-                })
-                .catch(error => {
-                    Swal.fire('Erro de conexão', 'Verifique sua internet ou o servidor.', 'error');
-                });
-  
-                atualizarTotaisDinamicamente();
-                
-            },
+
+                    // Se caiu em uma coluna normal, segue seu código original:
+                    fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="X-CSRF-TOKEN"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ id: clientId, status: newStatus })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status !== 'success') {
+                            location.reload();
+                        } else {
+                            Toast.fire({ icon: 'success', title: 'Status atualizado!' });
+                            atualizarTotaisDinamicamente();
+                        }
+                    });
+                },
+            });
         });
-    });
+
+        // 2. Lógica separada apenas para os BOTÕES
+        document.querySelectorAll('.drop-zone').forEach(zona => {
+            new Sortable(zona, {
+                group: 'kanban',
+                put: true,
+                pull: false,
+                onAdd: function (evt) {
+                    const clientId = evt.item.id.replace('client-', '');
+                    const targetZone = evt.to.id;
+
+                    if (targetZone === 'zone-success') {
+                        confirmarGanho(clientId, evt.item);
+                    } else if (targetZone === 'zone-danger') {
+                        confirmarPerda(clientId, evt.item);
+                    }
+                }
+            });
+        });
     
-    // 2. Lógica do Filtro de Busca
+    // 3. Lógica do Filtro de Busca
     const searchInput = document.getElementById('kanban-search');
     if (searchInput) {
         searchInput.addEventListener('keyup', function() {
@@ -428,4 +440,84 @@ function atualizarHistoricoLog(clientId) {
             // Usa a sua função que já existe para desenhar a timeline
             renderTimeline(data.logs || data);
         });
+}
+
+
+
+function confirmarGanho(id, itemElement) {
+    Swal.fire({
+        title: 'Parabéns pela venda!',
+        text: "Deseja finalizar este lead como GANHO?",
+        icon: 'success',
+        showCancelButton: true,
+        confirmButtonText: 'Sim, faturou!',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            enviarFinalizacao(id, 'ganho', '', itemElement);
+        } else {
+            location.reload();
+        }
+    });
+}
+
+function confirmarPerda(id, itemElement) {
+    Swal.fire({
+        title: 'Qual o motivo da perda?',
+        input: 'select',
+        inputOptions: {
+            'Preço': 'Preço alto',
+            'Concorrência': 'Fechou com concorrente',
+            'Desistência': 'Desistiu da compra',
+            'Sem contato': 'Não atende mais'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Confirmar Perda',
+    }).then((result) => {
+        if (result.isConfirmed && result.value) {
+            enviarFinalizacao(id, 'perdido', result.value, itemElement);
+        } else {
+            location.reload();
+        }
+    });
+}
+
+function enviarFinalizacao(id, statusFinal, motivo = '', itemElement = null) {
+    const formData = new FormData();
+    formData.append('id', id);
+    formData.append('status_final', statusFinal);
+    formData.append('motivo', motivo);
+
+    fetch(`${window.location.origin}/admin/clientes/finalizar`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="X-CSRF-TOKEN"]').getAttribute('content')
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Remove o card apenas após o sucesso no banco
+            if (itemElement) {
+                itemElement.remove();
+            } else {
+                const el = document.getElementById('client-' + id);
+                if (el) el.remove();
+            }
+            
+            atualizarTotaisDinamicamente();
+            Toast.fire({ 
+                icon: statusFinal === 'ganho' ? 'success' : 'info', 
+                title: statusFinal === 'ganho' ? 'Venda realizada!' : 'Lead arquivado' 
+            });
+        } else {
+            Swal.fire('Erro', data.message || 'Erro ao finalizar.', 'error').then(() => location.reload());
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        location.reload();
+    });
 }

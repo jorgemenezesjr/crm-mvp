@@ -30,7 +30,13 @@ class Clients extends BaseController
 
         // Lembra da nossa segurança de ontem? 
         // Filtramos pela empresa para ninguém ver o card do outro!
-        $clientes = $data['clientes'] = $model->where('empresa_id', $this->empresa_id)->findAll();
+        $clientes = $data['clientes'] = $model->where('empresa_id', $this->empresa_id)
+                                              ->where('status_final','aberto')
+                                              ->findAll();
+        
+        // FILTRO DE LIMPEZA: Pegamos apenas os leads que NÃO foram finalizados
+        $dados['clientes'] = $model->where('status_final', 'aberto')->findAll();
+        
         $data['titulo'] = "Fluxo de Vendas";
         
         
@@ -308,4 +314,42 @@ class Clients extends BaseController
         return str_replace(',', '.', str_replace('.', '', $value));
     }
     
+    
+    public function finalizar()
+    {
+        $id          = $this->request->getPost('id');
+        $statusFinal = $this->request->getPost('status_final'); 
+        $motivo      = $this->request->getPost('motivo');
+        $usuarioId   = session()->get('user_id') ?? 1; 
+
+        $db = \Config\Database::connect();
+
+        // 1. Testar Update do Cliente
+        $upd = $db->table('clients')->update([
+            'status_final'  => $statusFinal,
+            'motivo_perda'  => $motivo,
+            'finalizado_em' => date('Y-m-d H:i:s')
+        ], ['id' => $id]);
+
+        if (!$upd) {
+            $err = $db->error();
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Erro no Update: ' . $err['message']]);
+        }
+
+        // 2. Testar Insert do Log
+        $ins = $db->table('client_logs')->insert([
+            'client_id'  => $id,
+            'usuario_id' => $usuarioId,
+            'acao'       => "Finalizado como $statusFinal",
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+
+        if (!$ins) {
+            $err = $db->error();
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Erro no Log: ' . $err['message']]);
+        }
+
+        return $this->response->setJSON(['status' => 'success']);
+    }
+ 
 }
