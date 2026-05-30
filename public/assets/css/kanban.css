@@ -96,3 +96,29 @@
         transform: scale(1.05);
         border: 2px solid white !important;
     }
+    
+    /* Card Atrasado - Borda vermelha e sombra pulsante */
+    .kanban-item-container[data-tarefa="atrasado"] .inner-card-visual {
+        border-left: 5px solid #dc3545 !important;
+        background-color: #fff8f8 !important;
+        animation: pulsarAlerta 2s infinite;
+    }
+
+    /* Card com Retorno para Hoje - Alerta Amarelo */
+    .kanban-item-container[data-tarefa="hoje"] .inner-card-visual {
+        border-left: 5px solid #ffc107 !important;
+        background-color: #fffdf5 !important;
+    }
+
+    /* Card Esquecido (Sem nenhuma tarefa agendada) - Alerta de Limbo */
+    .kanban-item-container[data-tarefa="sem-tarefa"] .inner-card-visual {
+        border-left: 5px solid #6c757d !important;
+        opacity: 0.85;
+    }
+
+    /* Animação para o card atrasado chamar a atenção sem quebrar o layout */
+    @keyframes pulsarAlerta {
+        0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+        70% { box-shadow: 0 0 0 6px rgba(220, 53, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+    }

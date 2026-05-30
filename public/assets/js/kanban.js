@@ -296,13 +296,63 @@ document.addEventListener('click', function(e) {
         .then(data => {
             if (data.status === 'success') {
                 Toast.fire({ icon: 'success', title: 'Agendado!' });
-                // Troca o visual para "Tarefa Ativa"
+                
+                // Troca o visual no modal para "Tarefa Ativa"
                 document.getElementById('form-tarefa').classList.add('d-none');
                 document.getElementById('display-tarefa').classList.remove('d-none');
                 document.getElementById('lbl-tarefa-desc').innerText = desc;
                 
                 let dataFormatada = date ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR') : 'Sem data';
                 document.getElementById('lbl-tarefa-data').innerText = 'Prazo: ' + dataFormatada;
+                
+                // --- ATUALIZAÇÃO DO CARD NO KANBAN ---
+                const cardElement = document.getElementById(`client-${id}`);
+                if (cardElement) {
+                    // Pega o fuso horário local correto para comparar as datas sem erros de fuso
+                    const hoje = new Date().toLocaleDateString('en-CA'); // Retorna YYYY-MM-DD local
+
+                    let statusTarefaText = '';
+                    let badgeClass = '';
+                    let dataTarefaAttr = 'agendado';
+
+                    // 1. Define os textos e classes baseados na data selecionada
+                    if (!date) {
+                        dataTarefaAttr = 'sem-tarefa';
+                    } else if (date < hoje) {
+                        statusTarefaText = 'Atrasado';
+                        badgeClass = 'bg-danger';
+                        dataTarefaAttr = 'atrasado';
+                    } else if (date === hoje) {
+                        statusTarefaText = 'Hoje';
+                        badgeClass = 'bg-warning text-dark';
+                        dataTarefaAttr = 'hoje';
+                    } else {
+                        // Se for futuro, pega apenas o "Dia/Mês" (ex: 15/06)
+                        const partesData = date.split('-'); // [Ano, Mês, Dia]
+                        statusTarefaText = `${partesData[2]}/${partesData[1]}`;
+                        badgeClass = 'bg-info';
+                    }
+
+                    // 2. Atualiza o atributo para o CSS mudar a cor da borda imediatamente
+                    cardElement.setAttribute('data-tarefa', dataTarefaAttr);
+
+                    // 3. Remove o badge antigo (se houver um) para não duplicar na tela
+                    const badgeAntigo = cardElement.querySelector('.kanban-orelha-fixa');
+                    if (badgeAntigo) {
+                        badgeAntigo.remove();
+                    }
+
+                    // 4. Se houver uma data definida, cria e injeta o novo Badge no topo do card
+                    if (date) {
+                        const novoBadgeHtml = `
+                            <span class="badge ${badgeClass} shadow-sm kanban-orelha-fixa">
+                                <i class="fas fa-calendar-check me-1"></i> ${statusTarefaText}
+                            </span>
+                        `;
+                        // Insere logo no início da div do card para respeitar a sua estrutura
+                        cardElement.insertAdjacentHTML('afterbegin', novoBadgeHtml);
+                    }
+                }
             }
         });
     }

@@ -47,7 +47,7 @@
                                 ?>
 
                         
-                                <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>">
+                                <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>" data-tarefa="<?= empty($c['next_step_at']) ? 'sem-tarefa' : strtolower($statusTarefa) ?>">
                                     <?php if ($statusTarefa): ?>
                                         <span class="badge <?= $badgeClass ?> shadow-sm kanban-orelha-fixa">
                                             <i class="fas fa-calendar-check me-1"></i> <?= $statusTarefa ?>
@@ -107,7 +107,7 @@
                                 }
                             }
                             ?>
-                            <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>">
+                            <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>" data-tarefa="<?= empty($c['next_step_at']) ? 'sem-tarefa' : strtolower($statusTarefa) ?>">
                                 <?php if ($statusTarefa): ?>
                                     <span class="badge <?= $badgeClass ?> shadow-sm kanban-orelha-fixa">
                                         <i class="fas fa-calendar-check me-1"></i> <?= $statusTarefa ?>
@@ -153,7 +153,7 @@
                             $statusTarefa = '';
                             $badgeClass = '';
 
-                            if (!empty($c['next_step_at'])) {
+                            if (!empty($c['next_step_at']) && $c['status'] !== 'fechado') {
                                 if ($c['next_step_at'] < $hoje) {
                                     $statusTarefa = 'Atrasado';
                                     $badgeClass = 'bg-danger';
@@ -167,7 +167,7 @@
                             }
                         ?>
 
-                                <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>">
+                                <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>" data-tarefa="<?= empty($c['next_step_at']) ? 'sem-tarefa' : strtolower($statusTarefa) ?>">
                                     <?php if ($statusTarefa): ?>
                                         <span class="badge <?= $badgeClass ?> shadow-sm kanban-orelha-fixa" style="font-size: 0.7rem;">
                                             <i class="fas fa-calendar-check me-1"></i> <?= $statusTarefa ?>
@@ -228,7 +228,7 @@
                         ?>
 
                         
-                                <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>">
+                                <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>" data-tarefa="<?= empty($c['next_step_at']) ? 'sem-tarefa' : strtolower($statusTarefa) ?>">
                                     <?php if ($statusTarefa): ?>
                                         <span class="badge <?= $badgeClass ?> shadow-sm kanban-orelha-fixa" style="font-size: 0.7rem;">
                                             <i class="fas fa-calendar-check me-1"></i> <?= $statusTarefa ?>
