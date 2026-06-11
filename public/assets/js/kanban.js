@@ -37,6 +37,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     const clientId = evt.item.id.replace('client-', '');
                     const newStatus = evt.to.id;
 
+                    // --- ATUALIZAÇÃO VISUAL IMEDIATA ---
+                    // Recalcula os totais assim que o card cai na nova coluna
+                    atualizarTotaisDinamicamente();
+
                     // --- AQUI ESTÁ O PULO DO GATO ---
                     // Se o destino for um botão, NÃO faz o fetch de movimentação
                     if (newStatus === 'zone-success' || newStatus === 'zone-danger') {
@@ -58,7 +62,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (data.status !== 'success') {
                             location.reload();
                         } else {
-                            Toast.fire({ icon: 'success', title: 'Status atualizado!' });
+                            Toast.fire({ icon: 'success', title: 'Status updated!' });
+                            // Garante a precisão dos totais com a resposta do servidor
                             atualizarTotaisDinamicamente();
                         }
                     });
@@ -85,24 +90,27 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     
-    // 3. Lógica do Filtro de Busca
-    const searchInput = document.getElementById('kanban-search');
-    if (searchInput) {
-        searchInput.addEventListener('keyup', function() {
-            let searchTerm = this.value.toLowerCase();
-            let cards = document.querySelectorAll('.draggable');
+        // 3. Lógica do Filtro de Busca
+        const searchInput = document.getElementById('kanban-search');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                let searchTerm = this.value.toLowerCase();
+                let cards = document.querySelectorAll('.draggable');
 
-            cards.forEach(card => {
-                let clientName = card.querySelector('.fw-bold').innerText.toLowerCase();
-                
-                if (clientName.includes(searchTerm)) {
-                    card.style.display = "block";
-                } else {
-                    card.style.display = "none";
-                }
+                cards.forEach(card => {
+                    let clientName = card.querySelector('.fw-bold').innerText.toLowerCase();
+
+                    if (clientName.includes(searchTerm)) {
+                        card.style.display = "block";
+                    } else {
+                        card.style.display = "none";
+                    }
+                });
             });
-        });
-    }
+        }
+        
+        //4. Carrega valores nos cards de forma dinâmica. Primeira contagem da quantidade de Leads Ativos logo no primeiro carregamento
+        atualizarTotaisDinamicamente(); 
     
 });
 
@@ -452,32 +460,78 @@ function renderTimeline(data) {
 }
 
 
-
-
+// --- FUNÇÃO DE RECALCULO DE MÉTRICAS EM TEMPO REAL ---
 function atualizarTotaisDinamicamente() {
-    const colunas = ['lead', 'proposta', 'negociacao', 'fechado'];
+    let totalLead = 0;
+    let totalProposta = 0;
+    let totalNegociacao = 0;
+    let totalFechado = 0;
+    
+    let totalLeadsAtivosContador = 0;
+    let totalFechadosContador = 0; // Novo contador para a taxa de conversão
 
-    colunas.forEach(idColuna => {
-        const coluna = document.getElementById(idColuna);
+    // 1. Varre cada coluna somando os valores e contando os cards presentes (.draggable)
+    document.querySelectorAll('.kanban-column').forEach(coluna => {
+        const colunaId = coluna.id; // lead, proposta, negociacao, fechado
         const cards = coluna.querySelectorAll('.draggable');
-        let soma = 0;
 
+        let somaColuna = 0;
         cards.forEach(card => {
-            // Pega o valor puro que colocamos no data-valor
-            soma += parseFloat(card.getAttribute('data-valor')) || 0;
+            // Pega o valor guardado no atributo data-valor
+            let valor = parseFloat(card.getAttribute('data-valor')) || 0;
+            somaColuna += valor;
+
+            // Contadores de volume de cards
+            if (colunaId === 'fechado') {
+                totalFechadosContador++;
+            } else {
+                totalLeadsAtivosContador++;
+            }
         });
 
-        // Seleciona o badge pelo ID que criamos
-        const badge = document.getElementById(`total-${idColuna}`);
-        if (badge) {
-            badge.innerText = soma.toLocaleString('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            });
+        // Acumula para os totais globais do Dashboard
+        if (colunaId === 'lead') totalLead = somaColuna;
+        if (colunaId === 'proposta') totalProposta = somaColuna;
+        if (colunaId === 'negociacao') totalNegociacao = somaColuna;
+        if (colunaId === 'fechado') totalFechado = somaColuna;
+
+        // Atualiza o textinho do badge interno da coluna
+        const badgeColuna = document.getElementById(`total-${colunaId}`);
+        if (badgeColuna) {
+            badgeColuna.innerText = somaColuna.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
     });
-}
 
+    // 2. CÁLCULO DA TAXA DE CONVERSÃO
+    let taxaConversao = 0;
+    const totalGeralDeLeads = totalLeadsAtivosContador + totalFechadosContador;
+    
+    if (totalGeralDeLeads > 0) {
+        taxaConversao = (totalFechadosContador / totalGeralDeLeads) * 100;
+    }
+
+    // 3. ATUALIZA OS CARDS DO TOPO (DASHBOARD)
+    const pipelineTotal = totalLead + totalProposta + totalNegociacao;
+
+    const elFaturamento = document.getElementById('dash-faturamento');
+    const elPipeline = document.getElementById('dash-pipeline');
+    const elAtivosQtd = document.getElementById('dash-ativos-qtd');
+    const elConversao = document.getElementById('dash-conversao'); // Elemento novo
+
+    if (elFaturamento) {
+        elFaturamento.innerText = totalFechado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    if (elPipeline) {
+        elPipeline.innerText = pipelineTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    if (elAtivosQtd) {
+        elAtivosQtd.innerText = totalLeadsAtivosContador;
+    }
+    if (elConversao) {
+        // Exibe formatado com uma casa decimal (Ex: 25.5%)
+        elConversao.innerText = taxaConversao.toFixed(1).replace('.', ',') + '%';
+    }
+}
 
 
 // Função auxiliar para não repetir código

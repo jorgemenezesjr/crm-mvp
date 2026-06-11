@@ -13,6 +13,78 @@
             </div>
         </div>
     </div>
+    <div class="row mb-4 g-3">
+        <div class="col-12 col-sm-6 col-md-4 col-xl-3">
+            <div class="card shadow-sm border-0 bg-success text-white h-100">
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                    <div>
+                        <small class="text-uppercase fw-bold text-white-50" style="font-size: 0.75rem;">Faturamento Realizado</small>
+                        <h3 class="mb-0 fw-bold mt-1" id="dash-faturamento">
+                            R$ <?= number_format($totais['fechado'] ?? 0, 2, ',', '.') ?>
+                        </h3>
+                    </div>
+                    <div class="fs-1 text-white-50 opacity-50 ps-2">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-md-4 col-xl-3">
+            <div class="card shadow-sm border-0 bg-dark text-white h-100">
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                    <div>
+                        <small class="text-uppercase fw-bold text-white-50" style="font-size: 0.75rem;">Pipeline em Aberto</small>
+                        <h3 class="mb-0 fw-bold mt-1" id="dash-pipeline">
+                            <?php 
+                                $pipeline = ($totais['lead'] ?? 0) + ($totais['proposta'] ?? 0) + ($totais['negociacao'] ?? 0);
+                            ?>
+                            R$ <?= number_format($pipeline, 2, ',', '.') ?>
+                        </h3>
+                    </div>
+                    <div class="fs-1 text-white-50 opacity-50 ps-2">
+                        <i class="fas fa-funnel-dollar"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-md-4 col-xl-3">
+            <div class="card shadow-sm border-0 bg-white text-dark h-100">
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                    <div>
+                        <small class="text-uppercase fw-bold text-muted" style="font-size: 0.75rem;">Oportunidades Ativas</small>
+                        <h3 class="mb-0 fw-bold text-primary mt-1" id="dash-ativos-qtd">
+                            0
+                        </h3>
+                    </div>
+                    <div class="fs-1 text-muted opacity-50 ps-2">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+        <div class="col-12 col-sm-6 col-md-3">
+            <div class="card shadow-sm border-0 bg-info text-white h-100">
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                    <div>
+                        <small class="text-uppercase fw-bold text-white-50" style="font-size: 0.75rem;">Taxa de Conversão</small>
+                        <h3 class="mb-0 fw-bold mt-1" id="dash-conversao">
+                            0%
+                        </h3>
+                    </div>
+                    <div class="fs-1 text-white-50 opacity-50 ps-2">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+        
+    </div>  
     <div id="kanban-container" data-url="<?= site_url('admin/clientes/updateStatus') ?>">
         <div class="row flex-nowrap overflow-auto pb-3">
             
