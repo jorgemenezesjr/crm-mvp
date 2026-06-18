@@ -28,18 +28,18 @@ class Clients extends BaseController
     {
         $model = new \App\Models\ClientModel();
 
-        // Lembra da nossa segurança de ontem? 
-        // Filtramos pela empresa para ninguém ver o card do outro!
-        $clientes = $data['clientes'] = $model->where('empresa_id', $this->empresa_id)
-                                              ->where('status_final','aberto')
-                                              ->findAll();
-        
-        // FILTRO DE LIMPEZA: Pegamos apenas os leads que NÃO foram finalizados
-        $dados['clientes'] = $model->where('status_final', 'aberto')->findAll();
-        
+        // CORREÇÃO DA QUERY:
+        // Traz os registros da empresa que estão com status_final 'aberto' 
+        // OU que foram finalizados como 'ganho' (para somar o faturamento realizado)
+        $clientes = $model->where('empresa_id', $this->empresa_id)
+                          ->groupStart()
+                              ->where('status_final', 'aberto')
+                              ->orWhere('status_final', 'ganho')
+                          ->groupEnd()
+                          ->findAll();
+
         $data['titulo'] = "Fluxo de Vendas";
-        
-        
+
         $totais = [
             'lead'       => 0,
             'proposta'   => 0,
@@ -48,13 +48,15 @@ class Clients extends BaseController
         ];
 
         foreach ($clientes as $c) {
-            $totais[$c['status']] += $c['valor'];
+            // Evita que dê erro caso o status no banco mude para algo inesperado
+            if (isset($totais[$c['status']])) {
+                $totais[$c['status']] += $c['valor'];
+            }
         }
-        
+
         $data['clientes'] = $clientes;
         $data['totais'] = $totais;
 
-        
         return view('admin/kanban_view', $data);
     }
     
@@ -81,6 +83,7 @@ class Clients extends BaseController
             'email'    => $this->request->getPost('email'),
             'telefone' => $this->request->getPost('telefone'),
             'status'   => $this->request->getPost('status'),
+            'origem'   => $this->request->getPost('origem') ?? 'Não Informado',
             'valor'    => $valorLimpo
         ];
 
@@ -103,7 +106,7 @@ class Clients extends BaseController
         }
 
         $data['cliente'] = $cliente;
-        return view('admin/clients_form_view', $data);
+        return view('admin/clients_edit_view', $data);
     }
 
     
@@ -318,14 +321,19 @@ class Clients extends BaseController
     public function finalizar()
     {
         $id          = $this->request->getPost('id');
-        $statusFinal = $this->request->getPost('status_final'); 
+        $statusFinal = $this->request->getPost('status_final'); // Recebe 'ganho' ou 'perdido'
         $motivo      = $this->request->getPost('motivo');
         $usuarioId   = session()->get('user_id') ?? 1; 
 
         $db = \Config\Database::connect();
 
-        // 1. Testar Update do Cliente
+        // REGRA DE NEGÓCIO: Se for ganho, o status vira 'fechado' para somar no faturamento do topo.
+        // Se for perdido, o status vira 'perdido' para sumir das colunas normais.
+        $novoStatusPipeline = ($statusFinal === 'ganho') ? 'fechado' : 'perdido';
+
+        // 1. Atualizar os dados do Cliente
         $upd = $db->table('clients')->update([
+            'status'        => $novoStatusPipeline, // <-- O PULO DO GATO QUE FALTAVA!
             'status_final'  => $statusFinal,
             'motivo_perda'  => $motivo,
             'finalizado_em' => date('Y-m-d H:i:s')
@@ -336,11 +344,11 @@ class Clients extends BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => 'Erro no Update: ' . $err['message']]);
         }
 
-        // 2. Testar Insert do Log
+        // 2. Gravar o Histórico/Log
         $ins = $db->table('client_logs')->insert([
             'client_id'  => $id,
             'usuario_id' => $usuarioId,
-            'acao'       => "Finalizado como $statusFinal",
+            'acao'       => "Finalizado como $statusFinal" . ($motivo ? " (Motivo: $motivo)" : ""),
             'created_at' => date('Y-m-d H:i:s')
         ]);
 

@@ -140,6 +140,33 @@
                                                     R$ <?= number_format($c['valor'] ?? 0, 2, ',', '.') ?>
                                                 </span>
                                             </div>
+                                            
+                                            <div class="mt-2">
+                                                <?php
+                                                // Define uma cor bonita para cada rede social/origem
+                                                $bgOrigem = 'bg-secondary';
+                                                $iconOrigem = 'fa-globe';
+                                                $origem = strtolower($c['origem'] ?? 'não informado');
+
+                                                if (strpos($origem, 'instagram') !== false) {
+                                                    $bgOrigem = 'bg-danger'; // Vermelho/Rosa do Insta
+                                                    $iconOrigem = 'fa-instagram';
+                                                } elseif (strpos($origem, 'google') !== false) {
+                                                    $bgOrigem = 'bg-primary'; // Azul do Google
+                                                    $iconOrigem = 'fa-google';
+                                                } elseif (strpos($origem, 'whatsapp') !== false) {
+                                                    $bgOrigem = 'bg-success'; // Verde do Whats
+                                                    $iconOrigem = 'fa-whatsapp';
+                                                } elseif (strpos($origem, 'indicação') !== false || strpos($origem, 'indicacao') !== false) {
+                                                    $bgOrigem = 'bg-warning text-dark'; // Amarelo para indicação
+                                                    $iconOrigem = 'fa-user-check';
+                                                }
+                                                ?>
+                                                <span class="badge <?= $bgOrigem ?> d-inline-flex align-items-center gap-1" style="font-size: 0.7rem; padding: 3px 6px;">
+                                                    <i class="fab <?= $iconOrigem ?> fas"></i> 
+                                                    <?= ucfirst($c['origem'] ?? 'Não Informado') ?>
+                                                </span>
+                                            </div>
 
                                         </div>
                                     </div>
@@ -200,6 +227,34 @@
                                                 R$ <?= number_format($c['valor'] ?? 0, 2, ',', '.') ?>
                                             </span>
                                         </div>
+                                        
+                                        <div class="mt-2">
+                                            <?php
+                                            // Define uma cor bonita para cada rede social/origem
+                                            $bgOrigem = 'bg-secondary';
+                                            $iconOrigem = 'fa-globe';
+                                            $origem = mb_strtolower($c['origem'] ?? 'não informado');
+
+                                            if (strpos($origem, 'instagram') !== false) {
+                                                $bgOrigem = 'bg-danger'; // Vermelho/Rosa do Insta
+                                                $iconOrigem = 'fa-instagram';
+                                            } elseif (strpos($origem, 'google') !== false) {
+                                                $bgOrigem = 'bg-primary'; // Azul do Google
+                                                $iconOrigem = 'fa-google';
+                                            } elseif (strpos($origem, 'whatsapp') !== false) {
+                                                $bgOrigem = 'bg-success'; // Verde do Whats
+                                                $iconOrigem = 'fa-whatsapp';
+                                            } elseif (strpos($origem, 'indicação') !== false || strpos($origem, 'indicacao') !== false) {
+                                                $bgOrigem = 'bg-warning text-dark'; // Amarelo para indicação
+                                                $iconOrigem = 'fa-user-check';
+                                            }
+                                            ?>
+                                            <span class="badge <?= $bgOrigem ?> d-inline-flex align-items-center gap-1" style="font-size: 0.7rem; padding: 3px 6px;">
+                                                <i class="fab <?= $iconOrigem ?> fas"></i> 
+                                                <?= ucfirst($c['origem'] ?? 'Não Informado') ?>
+                                            </span>
+                                        </div>
+                                        
                                     </div>
                                 </div>
                             </div>
@@ -259,6 +314,34 @@
                                                     R$ <?= number_format($c['valor'] ?? 0, 2, ',', '.') ?>
                                                 </span>
                                             </div>
+                                            
+                                            <div class="mt-2">
+                                                <?php
+                                                // Define uma cor bonita para cada rede social/origem
+                                                $bgOrigem = 'bg-secondary';
+                                                $iconOrigem = 'fa-globe';
+                                                $origem = mb_strtolower($c['origem'] ?? 'não informado');
+
+                                                if (strpos($origem, 'instagram') !== false) {
+                                                    $bgOrigem = 'bg-danger'; // Vermelho/Rosa do Insta
+                                                    $iconOrigem = 'fa-instagram';
+                                                } elseif (strpos($origem, 'google') !== false) {
+                                                    $bgOrigem = 'bg-primary'; // Azul do Google
+                                                    $iconOrigem = 'fa-google';
+                                                } elseif (strpos($origem, 'whatsapp') !== false) {
+                                                    $bgOrigem = 'bg-success'; // Verde do Whats
+                                                    $iconOrigem = 'fa-whatsapp';
+                                                } elseif (strpos($origem, 'indicação') !== false || strpos($origem, 'indicacao') !== false) {
+                                                    $bgOrigem = 'bg-warning text-dark'; // Amarelo para indicação
+                                                    $iconOrigem = 'fa-user-check';
+                                                }
+                                                ?>
+                                                <span class="badge <?= $bgOrigem ?> d-inline-flex align-items-center gap-1" style="font-size: 0.7rem; padding: 3px 6px;">
+                                                    <i class="fab <?= $iconOrigem ?> fas"></i> 
+                                                    <?= ucfirst($c['origem'] ?? 'Não Informado') ?>
+                                                </span>
+                                            </div>
+                                            
                                         </div>
                                     </div>
                                 </div>
@@ -320,6 +403,34 @@
                                                     R$ <?= number_format($c['valor'] ?? 0, 2, ',', '.') ?>
                                                 </span>
                                             </div>
+                                            
+                                            <div class="mt-2">
+                                                <?php
+                                                // Define uma cor bonita para cada rede social/origem
+                                                $bgOrigem = 'bg-secondary';
+                                                $iconOrigem = 'fa-globe';
+                                                $origem = mb_strtolower($c['origem'] ?? 'não informado');
+
+                                                if (strpos($origem, 'instagram') !== false) {
+                                                    $bgOrigem = 'bg-danger'; // Vermelho/Rosa do Insta
+                                                    $iconOrigem = 'fa-instagram';
+                                                } elseif (strpos($origem, 'google') !== false) {
+                                                    $bgOrigem = 'bg-primary'; // Azul do Google
+                                                    $iconOrigem = 'fa-google';
+                                                } elseif (strpos($origem, 'whatsapp') !== false) {
+                                                    $bgOrigem = 'bg-success'; // Verde do Whats
+                                                    $iconOrigem = 'fa-whatsapp';
+                                                } elseif (strpos($origem, 'indicação') !== false || strpos($origem, 'indicacao') !== false) {
+                                                    $bgOrigem = 'bg-warning text-dark'; // Amarelo para indicação
+                                                    $iconOrigem = 'fa-user-check';
+                                                }
+                                                ?>
+                                                <span class="badge <?= $bgOrigem ?> d-inline-flex align-items-center gap-1" style="font-size: 0.7rem; padding: 3px 6px;">
+                                                    <i class="fab <?= $iconOrigem ?> fas"></i> 
+                                                    <?= ucfirst($c['origem'] ?? 'Não Informado') ?>
+                                                </span>
+                                            </div>
+                                            
                                         </div>
                                     </div>
                                 </div>
