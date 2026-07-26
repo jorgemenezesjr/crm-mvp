@@ -28,19 +28,59 @@ class Clients extends BaseController
     public function kanban()
     {
         $model = new \App\Models\ClientModel();
+        $db    = \Config\Database::connect();
 
-        // CORREÇÃO DA QUERY + JOIN COM VENDEDOR:
-        $clientes = $model->select('clients.*, users.username as responsable_nome')
-                          ->join('users', 'users.id = clients.usuario_id', 'left')
-                          ->where('clients.empresa_id', $this->empresa_id)
-                          ->groupStart()
-                              ->where('clients.status_final', 'aberto')
-                              ->orWhere('clients.status_final', 'ganho')
-                          ->groupEnd()
-                          ->findAll();
+        // 1. Captura os filtros enviados via GET
+        $filtroVendedor = $this->request->getGet('vendedor');
+        $filtroTarefa   = $this->request->getGet('tarefa');
 
-        $data['titulo'] = "Fluxo de Vendas";
+        // 2. Inicia a Query
+        $builder = $model->select('clients.*, users.username as responsable_nome')
+                        ->join('users', 'users.id = clients.usuario_id', 'left')
+                        ->where('clients.empresa_id', $this->empresa_id)
+                        ->groupStart()
+                            ->where('clients.status_final', 'aberto')
+                            ->orWhere('clients.status_final', 'ganho')
+                        ->groupEnd();
 
+        // 3. Aplica Filtro de Vendedor (se selecionado)
+        if (!empty($filtroVendedor)) {
+            if ($filtroVendedor === 'sem_responsavel') {
+                $builder->where('clients.usuario_id', null);
+            } else {
+                $builder->where('clients.usuario_id', $filtroVendedor);
+            }
+        }
+
+        // 4. Aplica Filtro de Tarefa / Próximo Passo
+        $hoje = date('Y-m-d');
+        if (!empty($filtroTarefa)) {
+            switch ($filtroTarefa) {
+                case 'atrasadas':
+                    $builder->where('clients.next_step_at <', $hoje)
+                            ->where('clients.next_step_at IS NOT NULL', null, false);
+                    break;
+                case 'hoje':
+                    $builder->where('clients.next_step_at', $hoje);
+                    break;
+                case 'futuras':
+                    $builder->where('clients.next_step_at >', $hoje);
+                    break;
+                case 'sem_tarefa':
+                    $builder->where('clients.next_step_at', null);
+                    break;
+            }
+        }
+
+        $clientes = $builder->findAll();
+
+        // 5. Busca lista de vendedores da empresa para popular o filtro do topo
+        $vendedores = $db->table('users')
+                        ->where('empresa_id', $this->empresa_id)
+                        ->get()
+                        ->getResultArray();
+
+        // 6. Totais das colunas
         $totais = [
             'lead'       => 0,
             'proposta'   => 0,
@@ -54,8 +94,13 @@ class Clients extends BaseController
             }
         }
 
-        $data['clientes'] = $clientes;
-        $data['totais']   = $totais;
+        // 7. Dados enviados para a View
+        $data['titulo']          = "Fluxo de Vendas";
+        $data['clientes']        = $clientes;
+        $data['totais']          = $totais;
+        $data['vendedores']      = $vendedores;
+        $data['filtroVendedor']  = $filtroVendedor;
+        $data['filtroTarefa']    = $filtroTarefa;
 
         return view('admin/kanban_view', $data);
     }

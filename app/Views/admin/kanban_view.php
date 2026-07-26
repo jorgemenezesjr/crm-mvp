@@ -3,16 +3,68 @@
 <link rel="stylesheet" href="<?= base_url('assets/css/kanban-modal.css') ?>">
 
 <div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="input-group">
-                <span class="input-group-text bg-white border-end-0">
-                    <i class="fas fa-search text-muted"></i>
-                </span>
-                <input type="text" id="kanban-search" class="form-control border-start-0 ps-0" placeholder="Buscar cliente pelo nome...">
-            </div>
+    
+    <!-- BARRA DE PESQUISA E FILTROS DO KANBAN -->
+    <div class="card mb-4 shadow-sm border-0">
+        <div class="card-body py-2 bg-light rounded">
+            <form method="GET" action="<?= site_url('admin/clientes/kanban') ?>" class="row g-2 align-items-center">
+                
+                <!-- Pesquisa por Nome -->
+                <div class="col-md-4 col-sm-12">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" id="kanban-search" class="form-control border-start-0 ps-0" placeholder="Buscar cliente pelo nome...">
+                    </div>
+                </div>
+
+                <!-- Filtro por Vendedor -->
+                <div class="col-md-3 col-sm-6">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white"><i class="fas fa-user-tie text-muted"></i></span>
+                        <select name="vendedor" class="form-select" onchange="this.form.submit()">
+                            <option value="">Todos os Vendedores</option>
+                            <option value="sem_responsavel" <?= (($filtroVendedor ?? '') === 'sem_responsavel') ? 'selected' : '' ?>>Sem Responsável</option>
+                            <?php if (!empty($vendedores)): ?>
+                                <?php foreach ($vendedores as $v): ?>
+                                    <option value="<?= $v['id'] ?>" <?= (($filtroVendedor ?? '') == $v['id']) ? 'selected' : '' ?>>
+                                        <?= esc($v['username'] ?? $v['email']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Filtro por Tarefa -->
+                <div class="col-md-3 col-sm-6">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white"><i class="fas fa-tasks text-muted"></i></span>
+                        <select name="tarefa" class="form-select" onchange="this.form.submit()">
+                            <option value="">Todas as Tarefas</option>
+                            <option value="atrasadas" <?= (($filtroTarefa ?? '') === 'atrasadas') ? 'selected' : '' ?>>⚠️ Tarefas Atrasadas</option>
+                            <option value="hoje" <?= (($filtroTarefa ?? '') === 'hoje') ? 'selected' : '' ?>>📅 Tarefas para Hoje</option>
+                            <option value="futuras" <?= (($filtroTarefa ?? '') === 'futuras') ? 'selected' : '' ?>>➡️ Tarefas Futuras</option>
+                            <option value="sem_tarefa" <?= (($filtroTarefa ?? '') === 'sem_tarefa') ? 'selected' : '' ?>>❌ Sem Tarefa Agendada</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Botão Limpar Filtros -->
+                <?php if (!empty($filtroVendedor) || !empty($filtroTarefa)): ?>
+                    <div class="col-md-2 col-sm-12">
+                        <a href="<?= site_url('admin/clientes/kanban') ?>" class="btn btn-sm btn-outline-secondary w-100">
+                            <i class="fas fa-times me-1"></i>Limpar
+                        </a>
+                    </div>
+                <?php endif; ?>
+
+            </form>
         </div>
     </div>
+
+    <!-- CARDS DE METRICAS/DASHBOARD -->
     <div class="row mb-4 g-3">
         <div class="col-12 col-sm-6 col-md-4 col-xl-3">
             <div class="card shadow-sm border-0 bg-success text-white h-100">
@@ -65,7 +117,6 @@
             </div>
         </div>
         
-        
         <div class="col-12 col-sm-6 col-md-3">
             <div class="card shadow-sm border-0 bg-info text-white h-100">
                 <div class="card-body p-3 d-flex align-items-center justify-content-between">
@@ -81,13 +132,13 @@
                 </div>
             </div>
         </div>
-        
-    </div>
-        
     </div>  
+
+    <!-- KANBAN CONTAINER -->
     <div id="kanban-container" data-url="<?= site_url('admin/clientes/updateStatus') ?>">
         <div class="row flex-nowrap overflow-auto pb-3">
             
+            <!-- COLUNA: LEADS -->
             <div class="col-12 col-sm-6 col-md-4 col-xl-3">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
@@ -118,7 +169,6 @@
                                     }
                                 ?>
 
-                        
                                 <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>" data-tarefa="<?= empty($c['next_step_at']) ? 'sem-tarefa' : strtolower($statusTarefa) ?>">
                                     <?php if ($statusTarefa): ?>
                                         <span class="badge <?= $badgeClass ?> shadow-sm kanban-orelha-fixa">
@@ -141,36 +191,34 @@
                                                 </span>
                                             </div>
 
-
-                                            <div class="mt-2">
+                                            <!-- RODAPÉ DO CARD: ORIGEM E RESPONSÁVEL -->
+                                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                                                <!-- Origem do Lead -->
                                                 <?php
-                                                // Define uma cor bonita para cada rede social/origem
-                                                $bgOrigem = 'bg-secondary';
-                                                $iconOrigem = 'fa-globe';
-                                                $origem = strtolower($c['origem'] ?? 'não informado');
+                                                    $bgOrigem = 'bg-secondary';
+                                                    $iconOrigem = 'fa-globe';
+                                                    $origem = mb_strtolower($c['origem'] ?? 'não informado');
 
-                                                if (strpos($origem, 'instagram') !== false) {
-                                                    $bgOrigem = 'bg-danger'; // Vermelho/Rosa do Insta
-                                                    $iconOrigem = 'fa-instagram';
-                                                } elseif (strpos($origem, 'google') !== false) {
-                                                    $bgOrigem = 'bg-primary'; // Azul do Google
-                                                    $iconOrigem = 'fa-google';
-                                                } elseif (strpos($origem, 'whatsapp') !== false) {
-                                                    $bgOrigem = 'bg-success'; // Verde do Whats
-                                                    $iconOrigem = 'fa-whatsapp';
-                                                } elseif (strpos($origem, 'indicação') !== false || strpos($origem, 'indicacao') !== false) {
-                                                    $bgOrigem = 'bg-warning text-dark'; // Amarelo para indicação
-                                                    $iconOrigem = 'fa-user-check';
-                                                }
+                                                    if (strpos($origem, 'instagram') !== false) {
+                                                        $bgOrigem = 'bg-danger';
+                                                        $iconOrigem = 'fa-instagram';
+                                                    } elseif (strpos($origem, 'google') !== false) {
+                                                        $bgOrigem = 'bg-primary';
+                                                        $iconOrigem = 'fa-google';
+                                                    } elseif (strpos($origem, 'whatsapp') !== false) {
+                                                        $bgOrigem = 'bg-success';
+                                                        $iconOrigem = 'fa-whatsapp';
+                                                    } elseif (strpos($origem, 'indicação') !== false || strpos($origem, 'indicacao') !== false) {
+                                                        $bgOrigem = 'bg-warning text-dark';
+                                                        $iconOrigem = 'fa-user-check';
+                                                    }
                                                 ?>
                                                 <span class="badge <?= $bgOrigem ?> d-inline-flex align-items-center gap-1" style="font-size: 0.7rem; padding: 3px 6px;">
                                                     <i class="fab <?= $iconOrigem ?> fas"></i> 
                                                     <?= ucfirst($c['origem'] ?? 'Não Informado') ?>
                                                 </span>
-                                            </div>
 
-                                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                                                <!-- BADGE DO RESPONSÁVEL -->
+                                                <!-- Badge do Responsável (Por último) -->
                                                 <span class="badge bg-light text-dark border rounded-pill small" title="Responsável pelo lead">
                                                     <i class="fas fa-user-circle text-primary me-1"></i>
                                                     <?= esc($c['responsable_nome'] ?? 'Sem responsável') ?>
@@ -186,6 +234,7 @@
                 </div>
             </div>
 
+            <!-- COLUNA: PROPOSTA -->
             <div class="col-12 col-sm-6 col-md-4 col-xl-3">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
@@ -197,91 +246,88 @@
                     <div class="card-body kanban-column" id="proposta">
                         <?php foreach ($clientes as $c): ?>
                             <?php if ($c['status'] == 'proposta'): ?>
-                        <?php 
-                            $hoje = date('Y-m-d');
-                            $statusTarefa = '';
-                            $badgeClass = '';
+                                <?php 
+                                    $hoje = date('Y-m-d');
+                                    $statusTarefa = '';
+                                    $badgeClass = '';
 
-                            if (!empty($c['next_step_at'])) {
-                                if ($c['next_step_at'] < $hoje) {
-                                    $statusTarefa = 'Atrasado';
-                                    $badgeClass = 'bg-danger';
-                                } elseif ($c['next_step_at'] == $hoje) {
-                                    $statusTarefa = 'Hoje';
-                                    $badgeClass = 'bg-warning text-dark';
-                                } else {
-                                    $statusTarefa = date('d/m', strtotime($c['next_step_at']));
-                                    $badgeClass = 'bg-info';
-                                }
-                            }
-                            ?>
-                            <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>" data-tarefa="<?= empty($c['next_step_at']) ? 'sem-tarefa' : strtolower($statusTarefa) ?>">
-                                <?php if ($statusTarefa): ?>
-                                    <span class="badge <?= $badgeClass ?> shadow-sm kanban-orelha-fixa">
-                                        <i class="fas fa-calendar-check me-1"></i> <?= $statusTarefa ?>
-                                    </span>
-                                <?php endif; ?>
+                                    if (!empty($c['next_step_at'])) {
+                                        if ($c['next_step_at'] < $hoje) {
+                                            $statusTarefa = 'Atrasado';
+                                            $badgeClass = 'bg-danger';
+                                        } elseif ($c['next_step_at'] == $hoje) {
+                                            $statusTarefa = 'Hoje';
+                                            $badgeClass = 'bg-warning text-dark';
+                                        } else {
+                                            $statusTarefa = date('d/m', strtotime($c['next_step_at']));
+                                            $badgeClass = 'bg-info';
+                                        }
+                                    }
+                                ?>
+                                <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>" data-tarefa="<?= empty($c['next_step_at']) ? 'sem-tarefa' : strtolower($statusTarefa) ?>">
+                                    <?php if ($statusTarefa): ?>
+                                        <span class="badge <?= $badgeClass ?> shadow-sm kanban-orelha-fixa">
+                                            <i class="fas fa-calendar-check me-1"></i> <?= $statusTarefa ?>
+                                        </span>
+                                    <?php endif; ?>
 
-                                <div class="card mb-2 inner-card-visual">
-                                    <div class="card-body p-2">
-                                        <div class="fw-bold text-dark btn-historico" 
-                                             data-id="<?= $c['id'] ?>" 
-                                             data-nome="<?= esc($c['nome']) ?>"
-                                             style="cursor: pointer;">
-                                             <?= $c['nome'] ?>
+                                    <div class="card mb-2 inner-card-visual">
+                                        <div class="card-body p-2">
+                                            <div class="fw-bold text-dark btn-historico" 
+                                                 data-id="<?= $c['id'] ?>" 
+                                                 data-nome="<?= esc($c['nome']) ?>"
+                                                 style="cursor: pointer;">
+                                                 <?= $c['nome'] ?>
+                                            </div>
+                                            <div class="small text-muted"><?= $c['telefone'] ?></div>
+                                            <div class="mt-1 d-flex justify-content-between align-items-center">
+                                                <span class="badge bg-light text-success border">
+                                                    R$ <?= number_format($c['valor'] ?? 0, 2, ',', '.') ?>
+                                                </span>
+                                            </div>
+
+                                            <!-- RODAPÉ DO CARD: ORIGEM E RESPONSÁVEL -->
+                                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                                                <?php
+                                                    $bgOrigem = 'bg-secondary';
+                                                    $iconOrigem = 'fa-globe';
+                                                    $origem = mb_strtolower($c['origem'] ?? 'não informado');
+
+                                                    if (strpos($origem, 'instagram') !== false) {
+                                                        $bgOrigem = 'bg-danger';
+                                                        $iconOrigem = 'fa-instagram';
+                                                    } elseif (strpos($origem, 'google') !== false) {
+                                                        $bgOrigem = 'bg-primary';
+                                                        $iconOrigem = 'fa-google';
+                                                    } elseif (strpos($origem, 'whatsapp') !== false) {
+                                                        $bgOrigem = 'bg-success';
+                                                        $iconOrigem = 'fa-whatsapp';
+                                                    } elseif (strpos($origem, 'indicação') !== false || strpos($origem, 'indicacao') !== false) {
+                                                        $bgOrigem = 'bg-warning text-dark';
+                                                        $iconOrigem = 'fa-user-check';
+                                                    }
+                                                ?>
+                                                <span class="badge <?= $bgOrigem ?> d-inline-flex align-items-center gap-1" style="font-size: 0.7rem; padding: 3px 6px;">
+                                                    <i class="fab <?= $iconOrigem ?> fas"></i> 
+                                                    <?= ucfirst($c['origem'] ?? 'Não Informado') ?>
+                                                </span>
+
+                                                <span class="badge bg-light text-dark border rounded-pill small" title="Responsável pelo lead">
+                                                    <i class="fas fa-user-circle text-primary me-1"></i>
+                                                    <?= esc($c['responsable_nome'] ?? 'Sem responsável') ?>
+                                                </span>
+                                            </div>
+                                            
                                         </div>
-                                        <div class="small text-muted"><?= $c['telefone'] ?></div>
-                                        <div class="mt-1 d-flex justify-content-between align-items-center">
-                                            <span class="badge bg-light text-success border">
-                                                R$ <?= number_format($c['valor'] ?? 0, 2, ',', '.') ?>
-                                            </span>
-                                        </div>
-
-                                        
-                                        <div class="mt-2">
-                                            <?php
-                                            // Define uma cor bonita para cada rede social/origem
-                                            $bgOrigem = 'bg-secondary';
-                                            $iconOrigem = 'fa-globe';
-                                            $origem = mb_strtolower($c['origem'] ?? 'não informado');
-
-                                            if (strpos($origem, 'instagram') !== false) {
-                                                $bgOrigem = 'bg-danger'; // Vermelho/Rosa do Insta
-                                                $iconOrigem = 'fa-instagram';
-                                            } elseif (strpos($origem, 'google') !== false) {
-                                                $bgOrigem = 'bg-primary'; // Azul do Google
-                                                $iconOrigem = 'fa-google';
-                                            } elseif (strpos($origem, 'whatsapp') !== false) {
-                                                $bgOrigem = 'bg-success'; // Verde do Whats
-                                                $iconOrigem = 'fa-whatsapp';
-                                            } elseif (strpos($origem, 'indicação') !== false || strpos($origem, 'indicacao') !== false) {
-                                                $bgOrigem = 'bg-warning text-dark'; // Amarelo para indicação
-                                                $iconOrigem = 'fa-user-check';
-                                            }
-                                            ?>
-                                            <span class="badge <?= $bgOrigem ?> d-inline-flex align-items-center gap-1" style="font-size: 0.7rem; padding: 3px 6px;">
-                                                <i class="fab <?= $iconOrigem ?> fas"></i> 
-                                                <?= ucfirst($c['origem'] ?? 'Não Informado') ?>
-                                            </span>
-                                        </div>
-
-                                        <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                                            <!-- BADGE DO RESPONSÁVEL -->
-                                            <span class="badge bg-light text-dark border rounded-pill small" title="Responsável pelo lead">
-                                                <i class="fas fa-user-circle text-primary me-1"></i>
-                                                <?= esc($c['responsable_nome'] ?? 'Sem responsável') ?>
-                                            </span>
-                                        </div>
-                                        
                                     </div>
                                 </div>
-                            </div>
                             <?php endif; ?>
                         <?php endforeach; ?>
                     </div>
                 </div>
             </div>
             
+            <!-- COLUNA: NEGOCIAÇÃO -->
             <div class="col-12 col-sm-6 col-md-4 col-xl-3">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
@@ -293,24 +339,24 @@
                     <div class="card-body kanban-column" id="negociacao">
                         <?php foreach ($clientes as $c): ?>
                             <?php if ($c['status'] == 'negociacao'): ?>
-                        <?php 
-                            $hoje = date('Y-m-d');
-                            $statusTarefa = '';
-                            $badgeClass = '';
+                                <?php 
+                                    $hoje = date('Y-m-d');
+                                    $statusTarefa = '';
+                                    $badgeClass = '';
 
-                            if (!empty($c['next_step_at']) && $c['status'] !== 'fechado') {
-                                if ($c['next_step_at'] < $hoje) {
-                                    $statusTarefa = 'Atrasado';
-                                    $badgeClass = 'bg-danger';
-                                } elseif ($c['next_step_at'] == $hoje) {
-                                    $statusTarefa = 'Hoje';
-                                    $badgeClass = 'bg-warning text-dark';
-                                } else {
-                                    $statusTarefa = date('d/m', strtotime($c['next_step_at']));
-                                    $badgeClass = 'bg-info';
-                                }
-                            }
-                        ?>
+                                    if (!empty($c['next_step_at']) && $c['status'] !== 'fechado') {
+                                        if ($c['next_step_at'] < $hoje) {
+                                            $statusTarefa = 'Atrasado';
+                                            $badgeClass = 'bg-danger';
+                                        } elseif ($c['next_step_at'] == $hoje) {
+                                            $statusTarefa = 'Hoje';
+                                            $badgeClass = 'bg-warning text-dark';
+                                        } else {
+                                            $statusTarefa = date('d/m', strtotime($c['next_step_at']));
+                                            $badgeClass = 'bg-info';
+                                        }
+                                    }
+                                ?>
 
                                 <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>" data-tarefa="<?= empty($c['next_step_at']) ? 'sem-tarefa' : strtolower($statusTarefa) ?>">
                                     <?php if ($statusTarefa): ?>
@@ -333,36 +379,32 @@
                                                 </span>
                                             </div>
 
-                                            
-                                            <div class="mt-2">
+                                            <!-- RODAPÉ DO CARD: ORIGEM E RESPONSÁVEL -->
+                                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
                                                 <?php
-                                                // Define uma cor bonita para cada rede social/origem
-                                                $bgOrigem = 'bg-secondary';
-                                                $iconOrigem = 'fa-globe';
-                                                $origem = mb_strtolower($c['origem'] ?? 'não informado');
+                                                    $bgOrigem = 'bg-secondary';
+                                                    $iconOrigem = 'fa-globe';
+                                                    $origem = mb_strtolower($c['origem'] ?? 'não informado');
 
-                                                if (strpos($origem, 'instagram') !== false) {
-                                                    $bgOrigem = 'bg-danger'; // Vermelho/Rosa do Insta
-                                                    $iconOrigem = 'fa-instagram';
-                                                } elseif (strpos($origem, 'google') !== false) {
-                                                    $bgOrigem = 'bg-primary'; // Azul do Google
-                                                    $iconOrigem = 'fa-google';
-                                                } elseif (strpos($origem, 'whatsapp') !== false) {
-                                                    $bgOrigem = 'bg-success'; // Verde do Whats
-                                                    $iconOrigem = 'fa-whatsapp';
-                                                } elseif (strpos($origem, 'indicação') !== false || strpos($origem, 'indicacao') !== false) {
-                                                    $bgOrigem = 'bg-warning text-dark'; // Amarelo para indicação
-                                                    $iconOrigem = 'fa-user-check';
-                                                }
+                                                    if (strpos($origem, 'instagram') !== false) {
+                                                        $bgOrigem = 'bg-danger';
+                                                        $iconOrigem = 'fa-instagram';
+                                                    } elseif (strpos($origem, 'google') !== false) {
+                                                        $bgOrigem = 'bg-primary';
+                                                        $iconOrigem = 'fa-google';
+                                                    } elseif (strpos($origem, 'whatsapp') !== false) {
+                                                        $bgOrigem = 'bg-success';
+                                                        $iconOrigem = 'fa-whatsapp';
+                                                    } elseif (strpos($origem, 'indicação') !== false || strpos($origem, 'indicacao') !== false) {
+                                                        $bgOrigem = 'bg-warning text-dark';
+                                                        $iconOrigem = 'fa-user-check';
+                                                    }
                                                 ?>
                                                 <span class="badge <?= $bgOrigem ?> d-inline-flex align-items-center gap-1" style="font-size: 0.7rem; padding: 3px 6px;">
                                                     <i class="fab <?= $iconOrigem ?> fas"></i> 
                                                     <?= ucfirst($c['origem'] ?? 'Não Informado') ?>
                                                 </span>
-                                            </div>
 
-                                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                                                <!-- BADGE DO RESPONSÁVEL -->
                                                 <span class="badge bg-light text-dark border rounded-pill small" title="Responsável pelo lead">
                                                     <i class="fas fa-user-circle text-primary me-1"></i>
                                                     <?= esc($c['responsable_nome'] ?? 'Sem responsável') ?>
@@ -378,7 +420,7 @@
                 </div>
             </div>
             
-            
+            <!-- COLUNA: FECHADO -->
             <div class="col-12 col-sm-6 col-md-4 col-xl-3">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
@@ -390,26 +432,25 @@
                     <div class="card-body kanban-column" id="fechado">
                         <?php foreach ($clientes as $c): ?>
                             <?php if ($c['status'] == 'fechado'): ?>
-                        <?php 
-                            $hoje = date('Y-m-d');
-                            $statusTarefa = '';
-                            $badgeClass = '';
+                                <?php 
+                                    $hoje = date('Y-m-d');
+                                    $statusTarefa = '';
+                                    $badgeClass = '';
 
-                            if (!empty($c['next_step_at'])) {
-                                if ($c['next_step_at'] < $hoje) {
-                                    $statusTarefa = 'Atrasado';
-                                    $badgeClass = 'bg-danger';
-                                } elseif ($c['next_step_at'] == $hoje) {
-                                    $statusTarefa = 'Hoje';
-                                    $badgeClass = 'bg-warning text-dark';
-                                } else {
-                                    $statusTarefa = date('d/m', strtotime($c['next_step_at']));
-                                    $badgeClass = 'bg-info';
-                                }
-                            }
-                        ?>
+                                    if (!empty($c['next_step_at'])) {
+                                        if ($c['next_step_at'] < $hoje) {
+                                            $statusTarefa = 'Atrasado';
+                                            $badgeClass = 'bg-danger';
+                                        } elseif ($c['next_step_at'] == $hoje) {
+                                            $statusTarefa = 'Hoje';
+                                            $badgeClass = 'bg-warning text-dark';
+                                        } else {
+                                            $statusTarefa = date('d/m', strtotime($c['next_step_at']));
+                                            $badgeClass = 'bg-info';
+                                        }
+                                    }
+                                ?>
 
-                        
                                 <div class="draggable kanban-item-container" id="client-<?= $c['id'] ?>" data-valor="<?= $c['valor'] ?? 0 ?>" data-tarefa="<?= empty($c['next_step_at']) ? 'sem-tarefa' : strtolower($statusTarefa) ?>">
                                     <?php if ($statusTarefa): ?>
                                         <span class="badge <?= $badgeClass ?> shadow-sm kanban-orelha-fixa" style="font-size: 0.7rem;">
@@ -431,35 +472,32 @@
                                                 </span>
                                             </div>                                        
 
-                                            <div class="mt-2">
+                                            <!-- RODAPÉ DO CARD: ORIGEM E RESPONSÁVEL -->
+                                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
                                                 <?php
-                                                // Define uma cor bonita para cada rede social/origem
-                                                $bgOrigem = 'bg-secondary';
-                                                $iconOrigem = 'fa-globe';
-                                                $origem = mb_strtolower($c['origem'] ?? 'não informado');
+                                                    $bgOrigem = 'bg-secondary';
+                                                    $iconOrigem = 'fa-globe';
+                                                    $origem = mb_strtolower($c['origem'] ?? 'não informado');
 
-                                                if (strpos($origem, 'instagram') !== false) {
-                                                    $bgOrigem = 'bg-danger'; // Vermelho/Rosa do Insta
-                                                    $iconOrigem = 'fa-instagram';
-                                                } elseif (strpos($origem, 'google') !== false) {
-                                                    $bgOrigem = 'bg-primary'; // Azul do Google
-                                                    $iconOrigem = 'fa-google';
-                                                } elseif (strpos($origem, 'whatsapp') !== false) {
-                                                    $bgOrigem = 'bg-success'; // Verde do Whats
-                                                    $iconOrigem = 'fa-whatsapp';
-                                                } elseif (strpos($origem, 'indicação') !== false || strpos($origem, 'indicacao') !== false) {
-                                                    $bgOrigem = 'bg-warning text-dark'; // Amarelo para indicação
-                                                    $iconOrigem = 'fa-user-check';
-                                                }
+                                                    if (strpos($origem, 'instagram') !== false) {
+                                                        $bgOrigem = 'bg-danger';
+                                                        $iconOrigem = 'fa-instagram';
+                                                    } elseif (strpos($origem, 'google') !== false) {
+                                                        $bgOrigem = 'bg-primary';
+                                                        $iconOrigem = 'fa-google';
+                                                    } elseif (strpos($origem, 'whatsapp') !== false) {
+                                                        $bgOrigem = 'bg-success';
+                                                        $iconOrigem = 'fa-whatsapp';
+                                                    } elseif (strpos($origem, 'indicação') !== false || strpos($origem, 'indicacao') !== false) {
+                                                        $bgOrigem = 'bg-warning text-dark';
+                                                        $iconOrigem = 'fa-user-check';
+                                                    }
                                                 ?>
                                                 <span class="badge <?= $bgOrigem ?> d-inline-flex align-items-center gap-1" style="font-size: 0.7rem; padding: 3px 6px;">
                                                     <i class="fab <?= $iconOrigem ?> fas"></i> 
                                                     <?= ucfirst($c['origem'] ?? 'Não Informado') ?>
                                                 </span>
-                                            </div>
 
-                                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                                                <!-- BADGE DO RESPONSÁVEL -->
                                                 <span class="badge bg-light text-dark border rounded-pill small" title="Responsável pelo lead">
                                                     <i class="fas fa-user-circle text-primary me-1"></i>
                                                     <?= esc($c['responsable_nome'] ?? 'Sem responsável') ?>
@@ -477,15 +515,19 @@
 
         </div>
     </div>
+
+    <!-- DROP ZONES PARA GANHO/PERDIDO -->
     <div id="drop-zones" class="d-flex justify-content-center gap-3 d-none" style="position: fixed; bottom: 20px; left: 0; right: 0; z-index: 9999;">
         <div id="zone-success" class="drop-zone bg-success text-white p-3 rounded shadow-lg border border-2 border-light" style="min-width: 200px; text-align: center;">
-            <i class="fas fa-troféu me-2"></i> SOLTE PARA GANHAR
+            <i class="fas fa-trophy me-2"></i> SOLTE PARA GANHAR
         </div>
         <div id="zone-danger" class="drop-zone bg-danger text-white p-3 rounded shadow-lg border border-2 border-light" style="min-width: 200px; text-align: center;">
             <i class="fas fa-thumbs-down me-2"></i> SOLTE PARA PERDER
         </div>
     </div>
 </div>
+
+<!-- MODAL DE HISTÓRICO E DETALHES -->
 <div class="modal fade" id="modalHistorico" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content crm-custom">
@@ -556,13 +598,13 @@
                     </div>
                 </div> 
             </div> 
-            
 
         </div>
     </div>
 </div>
 
 <?= $this->endSection() ?>
+
 <?= $this->section('scripts') ?>
     <script src="<?= base_url('assets/js/kanban.js') ?>"></script>
 <?= $this->endSection() ?>
