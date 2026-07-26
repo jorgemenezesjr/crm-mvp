@@ -14,7 +14,7 @@ class ClientModel extends Model
     protected $deletedField     = 'deleted_at';
 
     // IMPORTANTÍSSIMO: Liste os campos que podem ser gravados no banco
-    protected $allowedFields    = ['nome', 'email', 'status', 'telefone','empresa_id', 'valor','status_final','motivo_perda','finalizado_em','origem']; // Adicione o valor aqui
+    protected $allowedFields    = ['nome', 'email', 'status', 'telefone','empresa_id', 'usuario_id', 'valor','status_final','motivo_perda','finalizado_em','origem']; // Adicione o valor aqui
     protected $beforeInsert     = ['injectEmpresaId'];
 
     

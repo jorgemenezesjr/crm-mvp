@@ -10,31 +10,32 @@ class Clients extends BaseController
 {
     public function index()
     {
-        $model = new ClientModel();
+        $db = \Config\Database::connect();
         
-        // Buscamos todos os clientes do banco
-        //$data['clientes'] = $model->findAll();
-        // Em vez de $model->findAll(), usamos o nosso novo filtro
-        // Lembra que o $this->empresa_id vem lá do BaseController que configuramos?
-        $data['clientes'] = $model->getPerCompany($this->empresa_id);
-        $data['titulo']   = "Meus Clientes";
+        // Traz os clientes juntando com a tabela de usuários para capturar o nome do responsável
+        $data['clientes'] = $db->table('clients')
+            ->select('clients.*, users.username as responsable_nome')
+            ->join('users', 'users.id = clients.usuario_id', 'left')
+            ->where('clients.empresa_id', $this->empresa_id)
+            ->get()
+            ->getResultArray();
+
+        $data['titulo'] = "Meus Clientes";
 
         return view('admin/clients_list_view', $data);
     }
-    
-    
     
     public function kanban()
     {
         $model = new \App\Models\ClientModel();
 
-        // CORREÇÃO DA QUERY:
-        // Traz os registros da empresa que estão com status_final 'aberto' 
-        // OU que foram finalizados como 'ganho' (para somar o faturamento realizado)
-        $clientes = $model->where('empresa_id', $this->empresa_id)
+        // CORREÇÃO DA QUERY + JOIN COM VENDEDOR:
+        $clientes = $model->select('clients.*, users.username as responsable_nome')
+                          ->join('users', 'users.id = clients.usuario_id', 'left')
+                          ->where('clients.empresa_id', $this->empresa_id)
                           ->groupStart()
-                              ->where('status_final', 'aberto')
-                              ->orWhere('status_final', 'ganho')
+                              ->where('clients.status_final', 'aberto')
+                              ->orWhere('clients.status_final', 'ganho')
                           ->groupEnd()
                           ->findAll();
 
@@ -48,46 +49,48 @@ class Clients extends BaseController
         ];
 
         foreach ($clientes as $c) {
-            // Evita que dê erro caso o status no banco mude para algo inesperado
             if (isset($totais[$c['status']])) {
                 $totais[$c['status']] += $c['valor'];
             }
         }
 
         $data['clientes'] = $clientes;
-        $data['totais'] = $totais;
+        $data['totais']   = $totais;
 
         return view('admin/kanban_view', $data);
     }
     
-    
     public function create()
     {
-        return view('admin/clients_form_view'); // Vamos criar essa view agora
+        $db = \Config\Database::connect();
+
+        // Busca usuários da mesma empresa para exibir no select do formulário
+        $data['vendedores'] = $db->table('users')
+                                ->where('empresa_id', $this->empresa_id)
+                                ->get()
+                                ->getResultArray();
+
+        return view('admin/clients_form_view', $data);
     }
 
-    
     public function store()
     {
         $model = new ClientModel();
 
-        // Pega o valor que veio do formulário com máscara
-        $valorRaw = $this->request->getPost('valor'); 
-
-        // Limpeza: Remove o ponto de milhar e troca a vírgula por ponto decimal
+        $valorRaw   = $this->request->getPost('valor'); 
         $valorLimpo = $this->formatValue($valorRaw);
         
-        // Pegamos os dados do formulário
         $dados = [
-            'nome'     => $this->request->getPost('nome'),
-            'email'    => $this->request->getPost('email'),
-            'telefone' => $this->request->getPost('telefone'),
-            'status'   => $this->request->getPost('status'),
-            'origem'   => $this->request->getPost('origem') ?? 'Não Informado',
-            'valor'    => $valorLimpo
+            'empresa_id' => $this->empresa_id,
+            'usuario_id' => $this->request->getPost('usuario_id') ?: null, // Captura o vendedor selecionado
+            'nome'       => $this->request->getPost('nome'),
+            'email'      => $this->request->getPost('email'),
+            'telefone'   => $this->request->getPost('telefone'),
+            'status'     => $this->request->getPost('status'),
+            'origem'     => $this->request->getPost('origem') ?? 'Não Informado',
+            'valor'      => $valorLimpo
         ];
 
-        // O Model salva automaticamente no banco
         if ($model->save($dados)) {
             return redirect()->to('/admin/clientes')->with('msg', 'Cliente salvo com sucesso!');
         }
@@ -96,43 +99,45 @@ class Clients extends BaseController
     public function edit($id)
     {
         $model = new \App\Models\ClientModel();
+        $db    = \Config\Database::connect();
 
-        // Busca garantindo que o cliente pertence à empresa do usuário logado
         $cliente = $model->findForCompany($id, $this->empresa_id);
 
         if (!$cliente) {
-            // Se não achou, redireciona com erro (segurança!)
             return redirect()->to('/admin/clientes')->with('error', 'Cliente não encontrado.');
         }
 
-        $data['cliente'] = $cliente;
+        $data['cliente']    = $cliente;
+        // Passa a lista de vendedores para carregar no select da tela de edição
+        $data['vendedores'] = $db->table('users')
+                                ->where('empresa_id', $this->empresa_id)
+                                ->get()
+                                ->getResultArray();
+
         return view('admin/clients_edit_view', $data);
     }
 
-    
-   public function update($id)
+    public function update($id)
     {
         $model = new \App\Models\ClientModel();
 
-        // Primeiro, garante que esse cara pode editar esse ID
         $clienteExistente = $model->where(['id' => $id, 'empresa_id' => $this->empresa_id])->first();
 
         if (!$clienteExistente) {
             return redirect()->back()->with('error', 'Acesso negado.');
         }
 
-        // Pega os dados do POST
         $dadosParaAtualizar = $this->request->getPost();
 
-        // FORÇA o empresa_id da sessão, ignorando qualquer coisa que venha do form
+        // Garante a gravação dos campos formatados e seguros
         $dadosParaAtualizar['empresa_id'] = $this->empresa_id;
-        $dadosParaAtualizar['valor'] = $this->formatValue($this->empresa_id);
+        $dadosParaAtualizar['usuario_id'] = $this->request->getPost('usuario_id') ?: null;
+        $dadosParaAtualizar['valor']      = $this->formatValue($this->request->getPost('valor'));
 
         $model->update($id, $dadosParaAtualizar);
 
         return redirect()->to('/admin/clientes')->with('message', 'Atualizado com sucesso!');
     }
-    
     
     public function updateStatus()
     {
@@ -141,16 +146,13 @@ class Clients extends BaseController
         if ($json) {
             $model = new \App\Models\ClientModel();
 
-            // 1. Buscar o registro ATUAL antes de mudar
             $clienteAntigo = $model->find($json->id);
-            $statusAntigo = $clienteAntigo['status'] ?? 'desconhecido';
+            $statusAntigo  = $clienteAntigo['status'] ?? 'desconhecido';
 
-            // 2. Tentar atualizar para o novo status
             if ($model->update($json->id, ['status' => $json->status])) {
 
                 $logModel = new \App\Models\ClientLogModel();
 
-                // 3. Gravar o log com o histórico completo
                 $logModel->save([
                     'client_id'  => $json->id,
                     'usuario_id' => auth()->id(), 
@@ -170,32 +172,27 @@ class Clients extends BaseController
     {
         $model = new \App\Models\ClientModel();
 
-        // 1. Tenta localizar o cliente garantindo que ele pertence à empresa do usuário
         $cliente = $model->where([
             'id'         => $id, 
             'empresa_id' => $this->empresa_id
         ])->first();
 
-        // 2. Se não encontrar (ou se for de outra empresa), bloqueia a ação
         if (!$cliente) {
             return redirect()->to('/admin/clientes')
                              ->with('error', 'Operação inválida ou cliente não encontrado.');
         }
 
-        // 3. Se passou no teste, agora sim deleta
         $model->delete($id);
 
         return redirect()->to('/admin/clientes')
                          ->with('message', 'Cliente removido com sucesso!');
     }
-    
    
     public function historico($id)
     {
         try {
             $db = \Config\Database::connect();
 
-            // 1. Busca os logs
             $builder = $db->table('client_logs');
             $builder->select('client_logs.acao, client_logs.created_at, users.username as usuario_nome');
             $builder->join('users', 'users.id = client_logs.usuario_id', 'left');
@@ -203,41 +200,34 @@ class Clients extends BaseController
             $builder->orderBy('client_logs.created_at', 'DESC');
             $logs = $builder->get()->getResultArray();
 
-            // 2. Busca os dados do cliente (evitando erro se o cliente não existir)
             $cliente = $db->table('clients')
                           ->select('next_step_desc, next_step_at')
                           ->where('id', $id)
                           ->get()
                           ->getRowArray();
 
-            // 3. Retorna o objeto estruturado
             return $this->response->setJSON([
-                'logs'           => $logs ?: [], // Se for nulo, retorna array vazio
+                'logs'           => $logs ?: [],
                 'next_step_desc' => $cliente['next_step_desc'] ?? null,
                 'next_step_at'   => $cliente['next_step_at']   ?? null
             ]);
 
         } catch (\Exception $e) {
-            // Se der erro, avisa o que foi
             return $this->response->setStatusCode(500)->setJSON(['error' => $e->getMessage()]);
         }
     }
     
-    
-    
     public function addNota()
     {
-        // Pega o ID do usuário logado na sessão (ajuste conforme seu sistema de login)
         $usuarioId = user_id();
         
         if (!$usuarioId) {
             return $this->response->setJSON([
-                'status' => 'error',
+                'status'  => 'error',
                 'message' => 'Usuário não autenticado pelo Shield.'
             ])->setStatusCode(401);
         }   
 
-        // Captura os dados enviados pelo fetch
         $clienteId = $this->request->getPost('cliente_id');
         $mensagem  = $this->request->getPost('mensagem');
         
@@ -247,11 +237,10 @@ class Clients extends BaseController
 
         $db = \Config\Database::connect();
 
-        // Dados para inserir
         $data = [
             'client_id'  => $clienteId,
             'usuario_id' => $usuarioId,
-            'acao'       => $mensagem, // Aqui salvamos o texto da nota como uma "ação"
+            'acao'       => $mensagem,
             'type'       => 'manual',
             'created_at' => date('Y-m-d H:i:s')
         ];
@@ -267,10 +256,9 @@ class Clients extends BaseController
         }
     }
     
-    
-   // Salva ou atualiza o próximo passo
-    public function setNextStep() {
-        $id = $this->request->getPost('id');
+    public function setNextStep() 
+    {
+        $id   = $this->request->getPost('id');
         $desc = $this->request->getPost('desc');
         $date = $this->request->getPost('date');
 
@@ -283,25 +271,22 @@ class Clients extends BaseController
         return $this->response->setJSON(['status' => 'success']);
     }
 
-    // Conclui a tarefa e joga para o log
-    public function completeNextStep() {
+    public function completeNextStep() 
+    {
         $id = $this->request->getPost('id');
         $db = \Config\Database::connect();
 
-        // 1. Pega os dados atuais antes de apagar
         $cliente = $db->table('clients')->where('id', $id)->get()->getRow();
 
         if ($cliente && $cliente->next_step_desc) {
-            // 2. Registra no histórico (logs)
             $db->table('client_logs')->insert([
                 'client_id'  => $id,
-                'usuario_id'    => user_id(),
-                'acao'     => "✅ Tarefa Concluída: " . $cliente->next_step_desc,
+                'usuario_id' => user_id(),
+                'acao'       => "✅ Tarefa Concluída: " . $cliente->next_step_desc,
                 'type'       => 'manual',
                 'created_at' => date('Y-m-d H:i:s')
             ]);
 
-            // 3. Limpa o agendamento no cliente
             $db->table('clients')->where('id', $id)->update([
                 'next_step_desc' => null,
                 'next_step_at'   => null
@@ -311,29 +296,24 @@ class Clients extends BaseController
         return $this->response->setJSON(['status' => 'success']);
     }
     
-    
-    private function formatValue($value) {
-        // Remove o ponto de milhar e troca a vírgula decimal por ponto
+    private function formatValue($value) 
+    {
         return str_replace(',', '.', str_replace('.', '', $value));
     }
-    
     
     public function finalizar()
     {
         $id          = $this->request->getPost('id');
-        $statusFinal = $this->request->getPost('status_final'); // Recebe 'ganho' ou 'perdido'
+        $statusFinal = $this->request->getPost('status_final');
         $motivo      = $this->request->getPost('motivo');
         $usuarioId   = session()->get('user_id') ?? 1; 
 
         $db = \Config\Database::connect();
 
-        // REGRA DE NEGÓCIO: Se for ganho, o status vira 'fechado' para somar no faturamento do topo.
-        // Se for perdido, o status vira 'perdido' para sumir das colunas normais.
         $novoStatusPipeline = ($statusFinal === 'ganho') ? 'fechado' : 'perdido';
 
-        // 1. Atualizar os dados do Cliente
         $upd = $db->table('clients')->update([
-            'status'        => $novoStatusPipeline, // <-- O PULO DO GATO QUE FALTAVA!
+            'status'        => $novoStatusPipeline,
             'status_final'  => $statusFinal,
             'motivo_perda'  => $motivo,
             'finalizado_em' => date('Y-m-d H:i:s')
@@ -344,7 +324,6 @@ class Clients extends BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => 'Erro no Update: ' . $err['message']]);
         }
 
-        // 2. Gravar o Histórico/Log
         $ins = $db->table('client_logs')->insert([
             'client_id'  => $id,
             'usuario_id' => $usuarioId,
@@ -359,5 +338,4 @@ class Clients extends BaseController
 
         return $this->response->setJSON(['status' => 'success']);
     }
- 
 }

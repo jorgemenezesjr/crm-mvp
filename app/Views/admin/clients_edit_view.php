@@ -64,6 +64,20 @@
                             </select>
                         </div>
 
+                        <div class="mb-3">
+                            <label for="usuario_id" class="form-label fw-bold">Responsável pelo Lead</label>
+                            <select name="usuario_id" id="usuario_id" class="form-select">
+                                <option value="">Selecione um responsável...</option>
+                                <?php if (!empty($vendedores)): ?>
+                                    <?php foreach ($vendedores as $v): ?>
+                                        <option value="<?= $v['id'] ?>" <?= (isset($cliente) && $cliente['usuario_id'] == $v['id']) ? 'selected' : '' ?>>
+                                            <?= esc($v['username'] ?? $v['email']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="fas fa-save"></i> Salvar Alterações

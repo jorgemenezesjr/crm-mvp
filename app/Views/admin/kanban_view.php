@@ -140,7 +140,8 @@
                                                     R$ <?= number_format($c['valor'] ?? 0, 2, ',', '.') ?>
                                                 </span>
                                             </div>
-                                            
+
+
                                             <div class="mt-2">
                                                 <?php
                                                 // Define uma cor bonita para cada rede social/origem
@@ -165,6 +166,14 @@
                                                 <span class="badge <?= $bgOrigem ?> d-inline-flex align-items-center gap-1" style="font-size: 0.7rem; padding: 3px 6px;">
                                                     <i class="fab <?= $iconOrigem ?> fas"></i> 
                                                     <?= ucfirst($c['origem'] ?? 'Não Informado') ?>
+                                                </span>
+                                            </div>
+
+                                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                                                <!-- BADGE DO RESPONSÁVEL -->
+                                                <span class="badge bg-light text-dark border rounded-pill small" title="Responsável pelo lead">
+                                                    <i class="fas fa-user-circle text-primary me-1"></i>
+                                                    <?= esc($c['responsable_nome'] ?? 'Sem responsável') ?>
                                                 </span>
                                             </div>
 
@@ -227,6 +236,7 @@
                                                 R$ <?= number_format($c['valor'] ?? 0, 2, ',', '.') ?>
                                             </span>
                                         </div>
+
                                         
                                         <div class="mt-2">
                                             <?php
@@ -252,6 +262,14 @@
                                             <span class="badge <?= $bgOrigem ?> d-inline-flex align-items-center gap-1" style="font-size: 0.7rem; padding: 3px 6px;">
                                                 <i class="fab <?= $iconOrigem ?> fas"></i> 
                                                 <?= ucfirst($c['origem'] ?? 'Não Informado') ?>
+                                            </span>
+                                        </div>
+
+                                        <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                                            <!-- BADGE DO RESPONSÁVEL -->
+                                            <span class="badge bg-light text-dark border rounded-pill small" title="Responsável pelo lead">
+                                                <i class="fas fa-user-circle text-primary me-1"></i>
+                                                <?= esc($c['responsable_nome'] ?? 'Sem responsável') ?>
                                             </span>
                                         </div>
                                         
@@ -314,6 +332,7 @@
                                                     R$ <?= number_format($c['valor'] ?? 0, 2, ',', '.') ?>
                                                 </span>
                                             </div>
+
                                             
                                             <div class="mt-2">
                                                 <?php
@@ -339,6 +358,14 @@
                                                 <span class="badge <?= $bgOrigem ?> d-inline-flex align-items-center gap-1" style="font-size: 0.7rem; padding: 3px 6px;">
                                                     <i class="fab <?= $iconOrigem ?> fas"></i> 
                                                     <?= ucfirst($c['origem'] ?? 'Não Informado') ?>
+                                                </span>
+                                            </div>
+
+                                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                                                <!-- BADGE DO RESPONSÁVEL -->
+                                                <span class="badge bg-light text-dark border rounded-pill small" title="Responsável pelo lead">
+                                                    <i class="fas fa-user-circle text-primary me-1"></i>
+                                                    <?= esc($c['responsable_nome'] ?? 'Sem responsável') ?>
                                                 </span>
                                             </div>
                                             
@@ -402,8 +429,8 @@
                                                 <span class="badge bg-light text-success border">
                                                     R$ <?= number_format($c['valor'] ?? 0, 2, ',', '.') ?>
                                                 </span>
-                                            </div>
-                                            
+                                            </div>                                        
+
                                             <div class="mt-2">
                                                 <?php
                                                 // Define uma cor bonita para cada rede social/origem
@@ -428,6 +455,14 @@
                                                 <span class="badge <?= $bgOrigem ?> d-inline-flex align-items-center gap-1" style="font-size: 0.7rem; padding: 3px 6px;">
                                                     <i class="fab <?= $iconOrigem ?> fas"></i> 
                                                     <?= ucfirst($c['origem'] ?? 'Não Informado') ?>
+                                                </span>
+                                            </div>
+
+                                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                                                <!-- BADGE DO RESPONSÁVEL -->
+                                                <span class="badge bg-light text-dark border rounded-pill small" title="Responsável pelo lead">
+                                                    <i class="fas fa-user-circle text-primary me-1"></i>
+                                                    <?= esc($c['responsable_nome'] ?? 'Sem responsável') ?>
                                                 </span>
                                             </div>
                                             
